@@ -83,15 +83,14 @@ RUN curl -fsSL https://deb.nodesource.com/setup_${NODE_VERSION}.x | bash - \
 # ============================================
 # Create non-root user
 # ============================================
-ARG USERNAME=developer
-ARG USER_UID=1000
-ARG USER_GID=$USER_UID
+# ============================================
+# Configure existing ubuntu user for development
+# ============================================
+ARG USERNAME=ubuntu
 
-RUN groupadd --gid $USER_GID $USERNAME \
-    && useradd --uid $USER_UID --gid $USER_GID -m $USERNAME -s /bin/zsh \
-    && echo "$USERNAME ALL=(ALL) NOPASSWD:ALL" >> /etc/sudoers.d/$USERNAME \
+RUN echo "$USERNAME ALL=(ALL) NOPASSWD:ALL" >> /etc/sudoers.d/$USERNAME \
     && chmod 0440 /etc/sudoers.d/$USERNAME \
-    # Add user to docker group for socket access
+    && chsh -s /bin/zsh $USERNAME \
     && groupadd -f docker \
     && usermod -aG docker $USERNAME
 
@@ -188,5 +187,5 @@ WORKDIR /home/$USERNAME/workspace
 COPY --chown=$USERNAME:$USERNAME shared/scripts/entrypoint.sh /home/$USERNAME/.local/bin/entrypoint.sh
 RUN chmod +x /home/$USERNAME/.local/bin/entrypoint.sh
 
-ENTRYPOINT ["/home/developer/.local/bin/entrypoint.sh"]
+ENTRYPOINT ["/home/$USERNAME/.local/bin/entrypoint.sh"]
 CMD ["zsh"]
