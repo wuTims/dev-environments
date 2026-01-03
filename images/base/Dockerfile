@@ -28,7 +28,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     gnupg \
     lsb-release \
     software-properties-common \
-    apt-transport-https \
+    sudo \
     # Development essentials
     build-essential \
     git \
@@ -37,7 +37,6 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     # Shell and terminal
     zsh \
     tmux \
-    vim \
     neovim \
     # File utilities
     tree \
@@ -60,10 +59,6 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     locales \
     && rm -rf /var/lib/apt/lists/* \
     && locale-gen en_US.UTF-8
-
-# Install yq (not in default Ubuntu repos)
-RUN curl -fsSL https://github.com/mikefarah/yq/releases/latest/download/yq_linux_$(dpkg --print-architecture) -o /usr/local/bin/yq \
-    && chmod +x /usr/local/bin/yq
 
 # ============================================
 # Docker CLI (for Docker-out-of-Docker)

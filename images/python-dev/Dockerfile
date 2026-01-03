@@ -3,7 +3,7 @@
 # Supports: linux/amd64 (WSL2), linux/arm64 (M-series Mac)
 
 ARG REGISTRY=ghcr.io
-ARG NAMESPACE=YOUR_USERNAME
+ARG NAMESPACE=wutims
 FROM ${REGISTRY}/${NAMESPACE}/base:latest
 
 LABEL org.opencontainers.image.description="Python development environment with modern tooling"

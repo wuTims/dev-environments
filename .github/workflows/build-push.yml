@@ -232,10 +232,10 @@ jobs:
   # ============================================
   build-ml-training:
     runs-on: ubuntu-latest
-    needs: [changes, build-python-dev]
+    needs: [setup, changes, build-base, build-python-dev]
     if: |
-      always() &&
-      (needs.build-python-dev.result == 'success' || needs.build-python-dev.result == 'skipped') &&
+      needs.build-base.result == 'success' &&
+      needs.build-python-dev.result == 'success' &&
       (needs.changes.outputs.ml-training == 'true' || 
        github.event.inputs.image == 'ml-training' || 
        github.event.inputs.image == 'all')
