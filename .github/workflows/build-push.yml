@@ -232,7 +232,7 @@ jobs:
   # ============================================
   build-ml-training:
     runs-on: ubuntu-latest
-    needs: [setup, changes, build-base, build-python-dev]
+    needs: [changes, build-base, build-python-dev]
     if: |
       needs.build-base.result == 'success' &&
       needs.build-python-dev.result == 'success' &&
