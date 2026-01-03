@@ -22,12 +22,12 @@
   "mounts": [
     "source=/var/run/docker.sock,target=/var/run/docker.sock,type=bind",
     // Persist VS Code server extensions across rebuilds
-    "source=vscode-server-extensions,target=/home/developer/.vscode-server/extensions,type=volume"
+    "source=vscode-server-extensions,target=/home/ubuntu/.vscode-server/extensions,type=volume"
   ],
 
   // Run as the developer user
-  "remoteUser": "developer",
-  "containerUser": "developer",
+  "remoteUser": "ubuntu",
+  "containerUser": "ubuntu",
 
   // Environment variables
   "containerEnv": {

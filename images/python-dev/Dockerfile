@@ -8,11 +8,13 @@ FROM ${REGISTRY}/${NAMESPACE}/base:latest
 
 LABEL org.opencontainers.image.description="Python development environment with modern tooling"
 
-USER root
+ARG USERNAME=ubuntu
 
 # ============================================
-# Python installation
+# Python installation (requires root)
 # ============================================
+USER root
+
 ARG PYTHON_VERSION=3.12
 RUN add-apt-repository ppa:deadsnakes/ppa \
     && apt-get update \
@@ -20,23 +22,20 @@ RUN add-apt-repository ppa:deadsnakes/ppa \
         python${PYTHON_VERSION} \
         python${PYTHON_VERSION}-dev \
         python${PYTHON_VERSION}-venv \
-        python${PYTHON_VERSION}-distutils \
     && rm -rf /var/lib/apt/lists/* \
     && update-alternatives --install /usr/bin/python python /usr/bin/python${PYTHON_VERSION} 1 \
     && update-alternatives --install /usr/bin/python3 python3 /usr/bin/python${PYTHON_VERSION} 1
 
 # ============================================
-# uv - Fast Python package installer (replaces pip/pip-tools/virtualenv)
+# Switch to non-root user
 # ============================================
-USER developer
-RUN curl -LsSf https://astral.sh/uv/install.sh | sh \
-    && echo 'eval "$(~/.local/bin/uv generate-shell-completion zsh)"' >> ~/.zshrc \
-    && echo 'export PATH="$HOME/.local/bin:$PATH"' >> ~/.zshrc
+USER $USERNAME
 
-ENV PATH="/home/developer/.local/bin:${PATH}"
+# uv should already be installed from base, but ensure PATH
+ENV PATH="/home/${USERNAME}/.local/bin:${PATH}"
 
 # ============================================
-# Python development tools
+# Python development tools (user space)
 # ============================================
 RUN uv tool install ruff \
     && uv tool install mypy \
@@ -47,7 +46,6 @@ RUN uv tool install ruff \
 
 # ============================================
 # Global Python packages for development
-# Create a shared tools venv that's always available
 # ============================================
 RUN uv venv ~/.dev-tools \
     && . ~/.dev-tools/bin/activate \
@@ -88,19 +86,14 @@ RUN echo '# Python dev tools' >> ~/.zshrc \
 # ============================================
 # Python configuration files
 # ============================================
-COPY --chown=developer:developer config/pyproject.toml.template /home/developer/.config/python/pyproject.toml.template
-COPY --chown=developer:developer config/ruff.toml /home/developer/.config/ruff/ruff.toml
-COPY --chown=developer:developer config/mypy.ini /home/developer/.config/mypy/mypy.ini
+COPY --chown=$USERNAME:$USERNAME config/pyproject.toml.template /home/$USERNAME/.config/python/pyproject.toml.template
+COPY --chown=$USERNAME:$USERNAME config/ruff.toml /home/$USERNAME/.config/ruff/ruff.toml
+COPY --chown=$USERNAME:$USERNAME config/mypy.ini /home/$USERNAME/.config/mypy/mypy.ini
 
 # ============================================
 # Python-specific VS Code extensions
 # ============================================
-COPY --chown=developer:developer ../shared/extensions/python-extensions.txt /home/developer/.config/extensions/python-extensions.txt
+COPY --chown=$USERNAME:$USERNAME ../shared/extensions/python-extensions.txt /home/$USERNAME/.config/extensions/python-extensions.txt
 
-# ============================================
-# MCP Configuration (inherits DeepWiki from base)
-# ============================================
-# No additional MCPs for python-dev, inherits DeepWiki from base
-
-WORKDIR /home/developer/workspace
+WORKDIR /home/$USERNAME/workspace
 CMD ["zsh"]

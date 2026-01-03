@@ -4,10 +4,10 @@
   // Use docker-compose for multi-container setup
   "dockerComposeFile": "docker-compose.yml",
   "service": "dev",
-  "workspaceFolder": "/home/developer/workspace",
+  "workspaceFolder": "/home/ubuntu/workspace",
 
-  // Run as developer user
-  "remoteUser": "developer",
+  // Run as ubuntu user
+  "remoteUser": "ubuntu",
 
   // VS Code customizations
   "customizations": {

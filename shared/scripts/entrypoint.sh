@@ -26,7 +26,7 @@ fix_permissions() {
         if ! getent group docker-host > /dev/null 2>&1; then
             sudo groupadd -g "$DOCKER_GID" docker-host 2>/dev/null || true
         fi
-        sudo usermod -aG docker-host developer 2>/dev/null || true
+        sudo usermod -aG docker-host "$(whoami)" 2>/dev/null || true
         log_info "Docker socket permissions configured"
     fi
 }

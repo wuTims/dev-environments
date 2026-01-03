@@ -8,13 +8,15 @@ FROM ${REGISTRY}/${NAMESPACE}/base:latest
 
 LABEL org.opencontainers.image.description="Node.js/React/TypeScript development environment"
 
-USER root
+ARG USERNAME=ubuntu
 
 # ============================================
-# Playwright dependencies (for browser automation)
+# System dependencies (requires root)
 # ============================================
+USER root
+
+# Playwright browser dependencies
 RUN apt-get update && apt-get install -y --no-install-recommends \
-    # Playwright browser dependencies
     libnss3 \
     libnspr4 \
     libatk1.0-0 \
@@ -30,25 +32,27 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     libxrandr2 \
     libgbm1 \
     libasound2t64 \
-    # Additional utilities
     xvfb \
     && rm -rf /var/lib/apt/lists/*
 
-USER developer
+# Global npm packages (requires root for /usr/lib/node_modules)
+RUN npm install -g pnpm@latest
 
 # ============================================
-# pnpm - Fast, disk space efficient package manager
+# Switch to non-root user
 # ============================================
-RUN npm install -g pnpm@latest \
-    && pnpm setup \
+USER $USERNAME
+
+# Setup pnpm for user
+RUN pnpm setup \
     && echo 'export PNPM_HOME="$HOME/.local/share/pnpm"' >> ~/.zshrc \
     && echo 'export PATH="$PNPM_HOME:$PATH"' >> ~/.zshrc
 
-ENV PNPM_HOME="/home/developer/.local/share/pnpm"
+ENV PNPM_HOME="/home/${USERNAME}/.local/share/pnpm"
 ENV PATH="${PNPM_HOME}:${PATH}"
 
 # ============================================
-# Global Node.js tools
+# Global Node.js tools (user space via pnpm)
 # ============================================
 RUN pnpm add -g \
     # TypeScript
@@ -72,66 +76,63 @@ RUN pnpm add -g \
     nodemon
 
 # ============================================
-# Playwright browsers (pre-install to avoid runtime delays)
+# Playwright browsers
 # ============================================
 RUN pnpm add -g playwright \
-    && npx playwright install chromium \
-    && npx playwright install-deps chromium
+    && npx playwright install chromium
+
+# Playwright system deps (requires root)
+USER root
+RUN npx playwright install-deps chromium
+USER $USERNAME
 
 # ============================================
-# TanStack & React tooling
-# Pre-install common packages to speed up project setup
+# TanStack & React tooling (pre-cache)
 # ============================================
 RUN mkdir -p ~/.npm-cache/tanstack \
     && cd ~/.npm-cache/tanstack \
     && pnpm init -y \
     && pnpm add \
-        # TanStack ecosystem
         @tanstack/react-query \
         @tanstack/react-router \
         @tanstack/react-table \
         @tanstack/react-form \
         @tanstack/start \
-        # React
         react \
         react-dom \
-        # Tailwind CSS
         tailwindcss \
         postcss \
         autoprefixer \
         @tailwindcss/forms \
         @tailwindcss/typography \
         @tailwindcss/container-queries \
-        # Common UI libraries
         clsx \
         class-variance-authority \
         tailwind-merge \
         lucide-react \
-        # Zod for validation
         zod \
     && rm -rf ~/.npm-cache/tanstack
 
 # ============================================
-# MCP Configuration
+# MCP Configuration (Playwright + DeepWiki)
 # ============================================
-# Copy node-specific MCP config (includes Playwright MCP + DeepWiki)
-COPY --chown=developer:developer config/node-mcp.json /home/developer/.config/claude/.mcp.json
+COPY --chown=$USERNAME:$USERNAME config/node-mcp.json /home/$USERNAME/.config/claude/.mcp.json
 
 # ============================================
 # Node-specific VS Code extensions
 # ============================================
-COPY --chown=developer:developer ../shared/extensions/node-extensions.txt /home/developer/.config/extensions/node-extensions.txt
+COPY --chown=$USERNAME:$USERNAME ../shared/extensions/node-extensions.txt /home/$USERNAME/.config/extensions/node-extensions.txt
 
 # ============================================
 # Configuration templates
 # ============================================
-COPY --chown=developer:developer config/tsconfig.json.template /home/developer/.config/node/tsconfig.json.template
-COPY --chown=developer:developer config/eslint.config.js.template /home/developer/.config/node/eslint.config.js.template
-COPY --chown=developer:developer config/tailwind.config.js.template /home/developer/.config/node/tailwind.config.js.template
-COPY --chown=developer:developer config/vitest.config.ts.template /home/developer/.config/node/vitest.config.ts.template
+COPY --chown=$USERNAME:$USERNAME config/tsconfig.json.template /home/$USERNAME/.config/node/tsconfig.json.template
+COPY --chown=$USERNAME:$USERNAME config/eslint.config.js.template /home/$USERNAME/.config/node/eslint.config.js.template
+COPY --chown=$USERNAME:$USERNAME config/tailwind.config.js.template /home/$USERNAME/.config/node/tailwind.config.js.template
+COPY --chown=$USERNAME:$USERNAME config/vitest.config.ts.template /home/$USERNAME/.config/node/vitest.config.ts.template
 
 # ============================================
-# Shell aliases for Node development
+# Shell aliases
 # ============================================
 RUN echo '' >> ~/.zshrc \
     && echo '# Node.js aliases' >> ~/.zshrc \
@@ -148,5 +149,5 @@ RUN echo '' >> ~/.zshrc \
     && echo 'alias pwui="npx playwright test --ui"' >> ~/.zshrc \
     && echo 'alias pwcodegen="npx playwright codegen"' >> ~/.zshrc
 
-WORKDIR /home/developer/workspace
+WORKDIR /home/$USERNAME/workspace
 CMD ["zsh"]

@@ -15,13 +15,13 @@
     // Docker socket for DooD
     "source=/var/run/docker.sock,target=/var/run/docker.sock,type=bind",
     // Persist ML data/models between container rebuilds
-    "source=ml-data,target=/home/developer/data,type=volume",
-    "source=ml-models,target=/home/developer/models,type=volume"
+    "source=ml-data,target=/home/ubuntu/data,type=volume",
+    "source=ml-models,target=/home/ubuntu/models,type=volume"
   ],
 
   // Run as developer user
-  "remoteUser": "developer",
-  "containerUser": "developer",
+  "remoteUser": "ubuntu",
+  "containerUser": "ubuntu",
 
   // Environment
   "containerEnv": {
@@ -29,8 +29,8 @@
     "PYTHONUNBUFFERED": "1",
     "MLFLOW_TRACKING_URI": "mlruns",
     // HuggingFace cache
-    "HF_HOME": "/home/developer/.cache/huggingface",
-    "TRANSFORMERS_CACHE": "/home/developer/.cache/huggingface/transformers"
+    "HF_HOME": "/home/ubuntu/.cache/huggingface",
+    "TRANSFORMERS_CACHE": "/home/ubuntu/.cache/huggingface/transformers"
   },
 
   // GPU support (if available)
@@ -88,7 +88,7 @@
   },
 
   // Post-create: activate ML environment
-  "postCreateCommand": "echo 'source ~/.ml-tools/bin/activate' >> ~/.zshrc && echo '✅ ML training container ready!'",
+  "postCreateCommand": "echo 'source /home/ubuntu/.ml-tools/bin/activate' >> ~/.zshrc && echo '✅ ML training container ready!'",
   
   // Forward ports
   "forwardPorts": [

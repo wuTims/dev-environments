@@ -145,7 +145,9 @@ ENV PATH="/home/${USERNAME}/.claude/bin:${PATH}"
 # claude-mem plugin (Persistent Memory for Claude Code)
 # https://github.com/thedotmack/claude-mem
 # ============================================
+USER root
 RUN npm install -g claude-mem
+USER $USERNAME
 
 # ============================================
 # VS Code Server Extensions (for Attach to Container workflow)
@@ -187,5 +189,5 @@ WORKDIR /home/$USERNAME/workspace
 COPY --chown=$USERNAME:$USERNAME shared/scripts/entrypoint.sh /home/$USERNAME/.local/bin/entrypoint.sh
 RUN chmod +x /home/$USERNAME/.local/bin/entrypoint.sh
 
-ENTRYPOINT ["/home/$USERNAME/.local/bin/entrypoint.sh"]
+ENTRYPOINT ["/home/ubuntu/.local/bin/entrypoint.sh"]
 CMD ["zsh"]

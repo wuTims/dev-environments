@@ -5,13 +5,13 @@ services:
     image: ghcr.io/wutims/node-dev:latest
     volumes:
       # Workspace
-      - ..:/home/developer/workspace:cached
+      - ..:/home/ubuntu/workspace:cached
       # Docker socket for DooD
       - /var/run/docker.sock:/var/run/docker.sock
       # Persist various caches
-      - dev-node-modules:/home/developer/workspace/node_modules
-      - dev-pnpm-store:/home/developer/.local/share/pnpm/store
-      - dev-pip-cache:/home/developer/.cache/pip
+      - dev-node-modules:/home/ubuntu/workspace/node_modules
+      - dev-pnpm-store:/home/ubuntu/.local/share/pnpm/store
+      - dev-pip-cache:/home/ubuntu/.cache/pip
     environment:
       - NODE_ENV=development
       - PYTHONDONTWRITEBYTECODE=1

@@ -16,9 +16,9 @@
     "source=/var/run/docker.sock,target=/var/run/docker.sock,type=bind"
   ],
 
-  // Run as developer user
-  "remoteUser": "developer",
-  "containerUser": "developer",
+  // Run as ubuntu user
+  "remoteUser": "ubuntu",
+  "containerUser": "ubuntu",
 
   // Environment variables
   "containerEnv": {

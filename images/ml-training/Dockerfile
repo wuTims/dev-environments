@@ -8,11 +8,13 @@ FROM ${REGISTRY}/${NAMESPACE}/python-dev:latest
 
 LABEL org.opencontainers.image.description="ML/AI training environment with PyTorch and Jupyter"
 
-USER root
+ARG USERNAME=ubuntu
 
 # ============================================
-# Additional system dependencies for ML
+# System dependencies for ML (requires root)
 # ============================================
+USER root
+
 RUN apt-get update && apt-get install -y --no-install-recommends \
     # HDF5 for data storage
     libhdf5-dev \
@@ -26,7 +28,12 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     cm-super \
     && rm -rf /var/lib/apt/lists/*
 
-USER developer
+# ============================================
+# Switch to non-root user
+# ============================================
+USER $USERNAME
+
+ENV PATH="/home/${USERNAME}/.local/bin:${PATH}"
 
 # ============================================
 # ML/AI Python packages
@@ -106,12 +113,9 @@ ENV MLFLOW_TRACKING_URI=mlruns
 # ============================================
 # Expose ports
 # ============================================
-# Jupyter Lab
 EXPOSE 8888
-# TensorBoard
 EXPOSE 6006
-# MLflow
 EXPOSE 5000
 
-WORKDIR /home/developer/workspace
+WORKDIR /home/$USERNAME/workspace
 CMD ["zsh"]
