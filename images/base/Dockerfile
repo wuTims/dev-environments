@@ -5,7 +5,7 @@
 FROM ubuntu:24.04
 
 LABEL maintainer="your-email@example.com"
-LABEL org.opencontainers.image.source="https://github.com/wutims/dev-environments"
+LABEL org.opencontainers.image.source="https://github.com/YOUR_USERNAME/dev-environments"
 LABEL org.opencontainers.image.description="Base development environment with Claude Code and common tools"
 
 # Avoid prompts during package installation
@@ -42,12 +42,11 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     # File utilities
     tree \
     jq \
-    yq \
     ripgrep \
     fd-find \
     fzf \
     bat \
-    exa \
+    eza \
     unzip \
     zip \
     # Network utilities
@@ -61,6 +60,10 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     locales \
     && rm -rf /var/lib/apt/lists/* \
     && locale-gen en_US.UTF-8
+
+# Install yq (not in default Ubuntu repos)
+RUN curl -fsSL https://github.com/mikefarah/yq/releases/latest/download/yq_linux_$(dpkg --print-architecture) -o /usr/local/bin/yq \
+    && chmod +x /usr/local/bin/yq
 
 # ============================================
 # Docker CLI (for Docker-out-of-Docker)

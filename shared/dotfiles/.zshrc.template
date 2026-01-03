@@ -41,9 +41,9 @@ alias ~="cd ~"
 alias -- -="cd -"
 
 # Modern replacements (if installed)
-command -v exa &> /dev/null && alias ls="exa --icons"
-command -v exa &> /dev/null && alias ll="exa -la --icons"
-command -v exa &> /dev/null && alias tree="exa --tree --icons"
+command -v eza &> /dev/null && alias ls="eza --icons"
+command -v eza &> /dev/null && alias ll="eza -la --icons"
+command -v eza &> /dev/null && alias tree="eza --tree --icons"
 command -v bat &> /dev/null && alias cat="bat --style=plain"
 command -v fd &> /dev/null && alias find="fd"
 command -v rg &> /dev/null && alias grep="rg"

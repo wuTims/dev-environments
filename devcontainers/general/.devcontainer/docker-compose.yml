@@ -2,7 +2,7 @@ version: '3.8'
 
 services:
   dev:
-    image: ghcr.io/wutims/node-dev:latest
+    image: ghcr.io/YOUR_USERNAME/node-dev:latest
     volumes:
       # Workspace
       - ..:/home/developer/workspace:cached

@@ -3,7 +3,7 @@
 # Supports: linux/amd64 (WSL2), linux/arm64 (M-series Mac)
 
 ARG REGISTRY=ghcr.io
-ARG NAMESPACE=wutims
+ARG NAMESPACE=YOUR_USERNAME
 FROM ${REGISTRY}/${NAMESPACE}/base:latest
 
 LABEL org.opencontainers.image.description="Node.js/React/TypeScript development environment"

@@ -1,6 +1,6 @@
 {
   "name": "ML/AI Training",
-  "image": "ghcr.io/wutims/ml-training:latest",
+  "image": "ghcr.io/YOUR_USERNAME/ml-training:latest",
   
   // Features
   "features": {

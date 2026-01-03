@@ -10,7 +10,7 @@ Pre-built, multi-arch Docker images for consistent development across M-series M
 
 ```bash
 # Clone this repo
-git clone https://github.com/wutims/dev-environments.git
+git clone https://github.com/YOUR_USERNAME/dev-environments.git
 cd dev-environments
 
 # Run bootstrap (installs Docker, detects/installs editor, configures everything)
@@ -40,7 +40,7 @@ If you prefer running containers manually and attaching:
 docker run -d --name my-dev \
   -v $(pwd):/home/developer/workspace \
   -v /var/run/docker.sock:/var/run/docker.sock \
-  ghcr.io/wutims/python-dev:latest \
+  ghcr.io/YOUR_USERNAME/python-dev:latest \
   sleep infinity
 
 # In your editor: "Attach to Running Container" -> my-dev
@@ -153,7 +153,7 @@ Add to your project's `.devcontainer/devcontainer.json`:
 
 ```json
 {
-  "image": "ghcr.io/wutims/python-dev:latest",
+  "image": "ghcr.io/YOUR_USERNAME/python-dev:latest",
   "postCreateCommand": "uv pip install -r requirements-dev.txt"
 }
 ```
@@ -199,7 +199,7 @@ open http://localhost:37777
 docker build -t dev-base ./images/base
 
 # Build with buildx for multi-arch
-docker buildx build --platform linux/amd64,linux/arm64 -t ghcr.io/wutims/base:latest ./images/base
+docker buildx build --platform linux/amd64,linux/arm64 -t ghcr.io/YOUR_USERNAME/base:latest ./images/base
 ```
 
 ## Updating Images
