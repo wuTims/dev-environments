@@ -5,7 +5,7 @@
 FROM ubuntu:24.04
 
 LABEL maintainer="your-email@example.com"
-LABEL org.opencontainers.image.source="https://github.com/YOUR_USERNAME/dev-environments"
+LABEL org.opencontainers.image.source="https://github.com/wutims/dev-environments"
 LABEL org.opencontainers.image.description="Base development environment with Claude Code and common tools"
 
 # Avoid prompts during package installation

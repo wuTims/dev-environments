@@ -1,6 +1,6 @@
 {
   "name": "Node.js/React Development",
-  "image": "ghcr.io/YOUR_USERNAME/node-dev:latest",
+  "image": "ghcr.io/wutims/node-dev:latest",
   
   // Features to add
   "features": {

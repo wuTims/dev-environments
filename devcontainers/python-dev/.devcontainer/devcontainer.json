@@ -1,6 +1,6 @@
 {
   "name": "Python Development",
-  "image": "ghcr.io/YOUR_USERNAME/python-dev:latest",
+  "image": "ghcr.io/wutims/python-dev:latest",
   
   // ============================================
   // EDITOR COMPATIBILITY

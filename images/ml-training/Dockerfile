@@ -3,7 +3,7 @@
 # Supports: linux/amd64 (with optional CUDA), linux/arm64 (M-series Mac - CPU only)
 
 ARG REGISTRY=ghcr.io
-ARG NAMESPACE=YOUR_USERNAME
+ARG NAMESPACE=wutims
 FROM ${REGISTRY}/${NAMESPACE}/python-dev:latest
 
 LABEL org.opencontainers.image.description="ML/AI training environment with PyTorch and Jupyter"

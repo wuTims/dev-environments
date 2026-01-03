@@ -286,7 +286,7 @@ pull_images() {
     log_step "Pulling dev images (this may take a while)..."
     
     # Replace with your actual namespace
-    NAMESPACE="YOUR_USERNAME"
+    NAMESPACE="wutims"
     
     images=(
         "ghcr.io/$NAMESPACE/base:latest"
