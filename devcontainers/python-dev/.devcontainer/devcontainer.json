@@ -1,0 +1,104 @@
+{
+  "name": "Python Development",
+  "image": "ghcr.io/wutims/python-dev:latest",
+  
+  // ============================================
+  // EDITOR COMPATIBILITY
+  // Works with: VS Code, Cursor, Windsurf, VSCodium, etc.
+  // For "Attach to Container" workflow, extensions are pre-installed
+  // in the container image itself (see shared/extensions/)
+  // ============================================
+  
+  // Features to add - these layer on top of the base image
+  "features": {
+    // Docker-out-of-Docker: connect to host's Docker
+    "ghcr.io/devcontainers/features/docker-outside-of-docker:1": {
+      "moby": false,
+      "dockerDashComposeVersion": "v2"
+    }
+  },
+
+  // Mount the Docker socket for DooD
+  "mounts": [
+    "source=/var/run/docker.sock,target=/var/run/docker.sock,type=bind",
+    // Persist VS Code server extensions across rebuilds
+    "source=vscode-server-extensions,target=/home/developer/.vscode-server/extensions,type=volume"
+  ],
+
+  // Run as the developer user
+  "remoteUser": "developer",
+  "containerUser": "developer",
+
+  // Environment variables
+  "containerEnv": {
+    "PYTHONDONTWRITEBYTECODE": "1",
+    "PYTHONUNBUFFERED": "1"
+  },
+
+  // VS Code/Cursor/etc customizations
+  // These apply when using "Reopen in Container"
+  // For "Attach to Container", extensions are in the image
+  "customizations": {
+    "vscode": {
+      "settings": {
+        // Python
+        "python.defaultInterpreterPath": "/usr/bin/python",
+        "python.terminal.activateEnvironment": true,
+        "[python]": {
+          "editor.defaultFormatter": "charliermarsh.ruff",
+          "editor.formatOnSave": true,
+          "editor.codeActionsOnSave": {
+            "source.fixAll": "explicit",
+            "source.organizeImports": "explicit"
+          }
+        },
+        // Ruff
+        "ruff.enable": true,
+        "ruff.lint.run": "onSave",
+        // Testing
+        "python.testing.pytestEnabled": true,
+        "python.testing.unittestEnabled": false,
+        // Editor
+        "editor.rulers": [88, 120],
+        "files.trimTrailingWhitespace": true,
+        "files.insertFinalNewline": true,
+        // Terminal
+        "terminal.integrated.defaultProfile.linux": "zsh"
+      },
+      "extensions": [
+        // Python core
+        "ms-python.python",
+        "ms-python.vscode-pylance",
+        "charliermarsh.ruff",
+        "ms-python.mypy-type-checker",
+        // Testing
+        "littlefoxteam.vscode-python-test-adapter",
+        // Git
+        "eamodio.gitlens",
+        "mhutchie.git-graph",
+        // Docker
+        "ms-azuretools.vscode-docker",
+        // General
+        "streetsidesoftware.code-spell-checker",
+        "usernamehw.errorlens",
+        "oderwat.indent-rainbow"
+      ]
+    }
+  },
+
+  // Lifecycle hooks
+  "postCreateCommand": "echo '✅ Python dev container ready! spec-kit: specify --help | claude-mem: claude-mem --help'",
+  
+  // Forward ports for common services
+  "forwardPorts": [
+    8000,  // FastAPI/Uvicorn
+    5000,  // Flask
+    8080   // General
+  ],
+
+  // Port labels for VS Code UI
+  "portsAttributes": {
+    "8000": { "label": "FastAPI", "onAutoForward": "notify" },
+    "5000": { "label": "Flask", "onAutoForward": "notify" }
+  }
+}

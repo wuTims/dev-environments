@@ -1,0 +1,72 @@
+{
+  "name": "General Development (Python + Node)",
+  
+  // Use docker-compose for multi-container setup
+  "dockerComposeFile": "docker-compose.yml",
+  "service": "dev",
+  "workspaceFolder": "/home/developer/workspace",
+
+  // Run as developer user
+  "remoteUser": "developer",
+
+  // VS Code customizations
+  "customizations": {
+    "vscode": {
+      "settings": {
+        // Python
+        "python.defaultInterpreterPath": "/usr/bin/python",
+        "[python]": {
+          "editor.defaultFormatter": "charliermarsh.ruff",
+          "editor.formatOnSave": true
+        },
+        // TypeScript
+        "[typescript]": {
+          "editor.defaultFormatter": "biomejs.biome",
+          "editor.formatOnSave": true
+        },
+        "[typescriptreact]": {
+          "editor.defaultFormatter": "biomejs.biome",
+          "editor.formatOnSave": true
+        },
+        // General
+        "editor.rulers": [88, 100],
+        "terminal.integrated.defaultProfile.linux": "zsh",
+        "npm.packageManager": "pnpm"
+      },
+      "extensions": [
+        // Python
+        "ms-python.python",
+        "ms-python.vscode-pylance",
+        "charliermarsh.ruff",
+        // TypeScript/React
+        "biomejs.biome",
+        "bradlc.vscode-tailwindcss",
+        // Testing
+        "vitest.explorer",
+        "littlefoxteam.vscode-python-test-adapter",
+        // Git
+        "eamodio.gitlens",
+        // Docker
+        "ms-azuretools.vscode-docker",
+        // Claude
+        "anthropic.claude-code"
+      ]
+    }
+  },
+
+  // Forward ports
+  "forwardPorts": [
+    3000,  // Frontend
+    5173,  // Vite
+    8000,  // Backend API
+    5432,  // PostgreSQL
+    6379   // Redis
+  ],
+
+  "portsAttributes": {
+    "3000": { "label": "Frontend", "onAutoForward": "notify" },
+    "8000": { "label": "Backend API", "onAutoForward": "notify" },
+    "5432": { "label": "PostgreSQL", "onAutoForward": "silent" },
+    "6379": { "label": "Redis", "onAutoForward": "silent" }
+  }
+}

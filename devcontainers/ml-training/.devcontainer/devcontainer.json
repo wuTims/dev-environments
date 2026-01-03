@@ -1,0 +1,105 @@
+{
+  "name": "ML/AI Training",
+  "image": "ghcr.io/wutims/ml-training:latest",
+  
+  // Features
+  "features": {
+    // Docker-out-of-Docker
+    "ghcr.io/devcontainers/features/docker-outside-of-docker:1": {
+      "moby": false
+    }
+  },
+
+  // Mounts
+  "mounts": [
+    // Docker socket for DooD
+    "source=/var/run/docker.sock,target=/var/run/docker.sock,type=bind",
+    // Persist ML data/models between container rebuilds
+    "source=ml-data,target=/home/developer/data,type=volume",
+    "source=ml-models,target=/home/developer/models,type=volume"
+  ],
+
+  // Run as developer user
+  "remoteUser": "developer",
+  "containerUser": "developer",
+
+  // Environment
+  "containerEnv": {
+    "PYTHONDONTWRITEBYTECODE": "1",
+    "PYTHONUNBUFFERED": "1",
+    "MLFLOW_TRACKING_URI": "mlruns",
+    // HuggingFace cache
+    "HF_HOME": "/home/developer/.cache/huggingface",
+    "TRANSFORMERS_CACHE": "/home/developer/.cache/huggingface/transformers"
+  },
+
+  // GPU support (if available)
+  "hostRequirements": {
+    "gpu": "optional"
+  },
+  "runArgs": [
+    "--gpus=all"
+  ],
+
+  // VS Code customizations
+  "customizations": {
+    "vscode": {
+      "settings": {
+        // Python
+        "python.defaultInterpreterPath": "/home/developer/.ml-tools/bin/python",
+        "[python]": {
+          "editor.defaultFormatter": "charliermarsh.ruff",
+          "editor.formatOnSave": true
+        },
+        // Jupyter
+        "jupyter.askForKernelRestart": false,
+        "notebook.cellToolbarLocation": {
+          "default": "right"
+        },
+        // Testing
+        "python.testing.pytestEnabled": true,
+        // Editor
+        "editor.rulers": [88, 120],
+        // Terminal
+        "terminal.integrated.defaultProfile.linux": "zsh"
+      },
+      "extensions": [
+        // Python
+        "ms-python.python",
+        "ms-python.vscode-pylance",
+        "charliermarsh.ruff",
+        // Jupyter
+        "ms-toolsai.jupyter",
+        "ms-toolsai.jupyter-keymap",
+        "ms-toolsai.jupyter-renderers",
+        "ms-toolsai.vscode-jupyter-slideshow",
+        // Data
+        "RandomFractalsInc.vscode-data-preview",
+        "mechatroner.rainbow-csv",
+        // Git
+        "eamodio.gitlens",
+        "mhutchie.git-graph",
+        // Docker
+        "ms-azuretools.vscode-docker",
+        // Claude
+        "anthropic.claude-code"
+      ]
+    }
+  },
+
+  // Post-create: activate ML environment
+  "postCreateCommand": "echo 'source ~/.ml-tools/bin/activate' >> ~/.zshrc && echo '✅ ML training container ready!'",
+  
+  // Forward ports
+  "forwardPorts": [
+    8888,  // Jupyter Lab
+    6006,  // TensorBoard
+    5000   // MLflow
+  ],
+
+  "portsAttributes": {
+    "8888": { "label": "Jupyter Lab", "onAutoForward": "notify" },
+    "6006": { "label": "TensorBoard", "onAutoForward": "notify" },
+    "5000": { "label": "MLflow", "onAutoForward": "notify" }
+  }
+}

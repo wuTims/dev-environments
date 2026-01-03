@@ -1,0 +1,23 @@
+# Node/TypeScript Extensions
+# Additional extensions for Node.js/React/TypeScript development
+# Format: publisher.extension-name
+
+# TypeScript/JavaScript
+ms-vscode.vscode-typescript-next
+biomejs.biome
+dbaeumer.vscode-eslint
+
+# React
+dsznajder.es7-react-js-snippets
+styled-components.vscode-styled-components
+
+# Tailwind CSS
+bradlc.vscode-tailwindcss
+
+# Testing
+vitest.explorer
+ms-playwright.playwright
+
+# Utilities
+formulahendry.auto-rename-tag
+christian-kohler.path-intellisense

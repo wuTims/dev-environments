@@ -1,0 +1,286 @@
+name: Build and Push Dev Images
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'images/**'
+      - 'shared/**'
+      - '.github/workflows/build-push.yml'
+  pull_request:
+    branches: [main]
+    paths:
+      - 'images/**'
+      - 'shared/**'
+  workflow_dispatch:
+    inputs:
+      image:
+        description: 'Specific image to build (base, python-dev, node-dev, ml-training, all)'
+        required: false
+        default: 'all'
+
+env:
+  REGISTRY: ghcr.io
+  NAMESPACE: ${{ github.repository_owner }}
+
+jobs:
+  # ============================================
+  # Detect which images need rebuilding
+  # ============================================
+  changes:
+    runs-on: ubuntu-latest
+    outputs:
+      base: ${{ steps.filter.outputs.base }}
+      python-dev: ${{ steps.filter.outputs.python-dev }}
+      node-dev: ${{ steps.filter.outputs.node-dev }}
+      ml-training: ${{ steps.filter.outputs.ml-training }}
+    steps:
+      - uses: actions/checkout@v4
+      
+      - uses: dorny/paths-filter@v3
+        id: filter
+        with:
+          filters: |
+            base:
+              - 'images/base/**'
+              - 'shared/**'
+            python-dev:
+              - 'images/python-dev/**'
+              - 'images/base/**'
+              - 'shared/**'
+            node-dev:
+              - 'images/node-dev/**'
+              - 'images/base/**'
+              - 'shared/**'
+            ml-training:
+              - 'images/ml-training/**'
+              - 'images/python-dev/**'
+              - 'images/base/**'
+              - 'shared/**'
+
+  # ============================================
+  # Build base image first (dependency for others)
+  # ============================================
+  build-base:
+    runs-on: ubuntu-latest
+    needs: changes
+    if: |
+      needs.changes.outputs.base == 'true' || 
+      github.event.inputs.image == 'base' || 
+      github.event.inputs.image == 'all'
+    permissions:
+      contents: read
+      packages: write
+    
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up QEMU
+        uses: docker/setup-qemu-action@v3
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Login to GitHub Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Extract metadata
+        id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: ${{ env.REGISTRY }}/${{ env.NAMESPACE }}/base
+          tags: |
+            type=raw,value=latest
+            type=sha,prefix=
+            type=ref,event=branch
+
+      - name: Build and push base
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          file: ./images/base/Dockerfile
+          platforms: linux/amd64,linux/arm64
+          push: ${{ github.event_name != 'pull_request' }}
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+  # ============================================
+  # Build python-dev (depends on base)
+  # ============================================
+  build-python-dev:
+    runs-on: ubuntu-latest
+    needs: [changes, build-base]
+    if: |
+      always() &&
+      (needs.build-base.result == 'success' || needs.build-base.result == 'skipped') &&
+      (needs.changes.outputs.python-dev == 'true' || 
+       github.event.inputs.image == 'python-dev' || 
+       github.event.inputs.image == 'all')
+    permissions:
+      contents: read
+      packages: write
+    
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up QEMU
+        uses: docker/setup-qemu-action@v3
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Login to GitHub Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Extract metadata
+        id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: ${{ env.REGISTRY }}/${{ env.NAMESPACE }}/python-dev
+          tags: |
+            type=raw,value=latest
+            type=sha,prefix=
+            type=ref,event=branch
+
+      - name: Build and push python-dev
+        uses: docker/build-push-action@v5
+        with:
+          context: ./images/python-dev
+          file: ./images/python-dev/Dockerfile
+          platforms: linux/amd64,linux/arm64
+          push: ${{ github.event_name != 'pull_request' }}
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+          build-args: |
+            REGISTRY=${{ env.REGISTRY }}
+            NAMESPACE=${{ env.NAMESPACE }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+  # ============================================
+  # Build node-dev (depends on base)
+  # ============================================
+  build-node-dev:
+    runs-on: ubuntu-latest
+    needs: [changes, build-base]
+    if: |
+      always() &&
+      (needs.build-base.result == 'success' || needs.build-base.result == 'skipped') &&
+      (needs.changes.outputs.node-dev == 'true' || 
+       github.event.inputs.image == 'node-dev' || 
+       github.event.inputs.image == 'all')
+    permissions:
+      contents: read
+      packages: write
+    
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up QEMU
+        uses: docker/setup-qemu-action@v3
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Login to GitHub Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Extract metadata
+        id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: ${{ env.REGISTRY }}/${{ env.NAMESPACE }}/node-dev
+          tags: |
+            type=raw,value=latest
+            type=sha,prefix=
+            type=ref,event=branch
+
+      - name: Build and push node-dev
+        uses: docker/build-push-action@v5
+        with:
+          context: ./images/node-dev
+          file: ./images/node-dev/Dockerfile
+          platforms: linux/amd64,linux/arm64
+          push: ${{ github.event_name != 'pull_request' }}
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+          build-args: |
+            REGISTRY=${{ env.REGISTRY }}
+            NAMESPACE=${{ env.NAMESPACE }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+  # ============================================
+  # Build ml-training (depends on python-dev)
+  # ============================================
+  build-ml-training:
+    runs-on: ubuntu-latest
+    needs: [changes, build-python-dev]
+    if: |
+      always() &&
+      (needs.build-python-dev.result == 'success' || needs.build-python-dev.result == 'skipped') &&
+      (needs.changes.outputs.ml-training == 'true' || 
+       github.event.inputs.image == 'ml-training' || 
+       github.event.inputs.image == 'all')
+    permissions:
+      contents: read
+      packages: write
+    
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up QEMU
+        uses: docker/setup-qemu-action@v3
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Login to GitHub Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Extract metadata
+        id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: ${{ env.REGISTRY }}/${{ env.NAMESPACE }}/ml-training
+          tags: |
+            type=raw,value=latest
+            type=sha,prefix=
+            type=ref,event=branch
+
+      - name: Build and push ml-training
+        uses: docker/build-push-action@v5
+        with:
+          context: ./images/ml-training
+          file: ./images/ml-training/Dockerfile
+          platforms: linux/amd64,linux/arm64
+          push: ${{ github.event_name != 'pull_request' }}
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+          build-args: |
+            REGISTRY=${{ env.REGISTRY }}
+            NAMESPACE=${{ env.NAMESPACE }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max

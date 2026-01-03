@@ -1,0 +1,133 @@
+{
+  "name": "Node.js/React Development",
+  "image": "ghcr.io/wutims/node-dev:latest",
+  
+  // Features to add
+  "features": {
+    // Docker-out-of-Docker
+    "ghcr.io/devcontainers/features/docker-outside-of-docker:1": {
+      "moby": false,
+      "dockerDashComposeVersion": "v2"
+    }
+  },
+
+  // Mount Docker socket for DooD
+  "mounts": [
+    "source=/var/run/docker.sock,target=/var/run/docker.sock,type=bind"
+  ],
+
+  // Run as developer user
+  "remoteUser": "developer",
+  "containerUser": "developer",
+
+  // Environment variables
+  "containerEnv": {
+    "NODE_ENV": "development",
+    "DISPLAY": ":99"
+  },
+
+  // Run Xvfb for Playwright headless browser testing
+  "postStartCommand": "Xvfb :99 -screen 0 1920x1080x24 &",
+
+  // VS Code customizations
+  "customizations": {
+    "vscode": {
+      "settings": {
+        // TypeScript/JavaScript
+        "[typescript]": {
+          "editor.defaultFormatter": "biomejs.biome",
+          "editor.formatOnSave": true,
+          "editor.codeActionsOnSave": {
+            "source.fixAll": "explicit",
+            "source.organizeImports": "explicit"
+          }
+        },
+        "[typescriptreact]": {
+          "editor.defaultFormatter": "biomejs.biome",
+          "editor.formatOnSave": true
+        },
+        "[javascript]": {
+          "editor.defaultFormatter": "biomejs.biome",
+          "editor.formatOnSave": true
+        },
+        "[javascriptreact]": {
+          "editor.defaultFormatter": "biomejs.biome",
+          "editor.formatOnSave": true
+        },
+        "[json]": {
+          "editor.defaultFormatter": "biomejs.biome"
+        },
+        // Biome
+        "biome.enabled": true,
+        // TypeScript
+        "typescript.preferences.importModuleSpecifier": "relative",
+        "typescript.suggest.autoImports": true,
+        "typescript.updateImportsOnFileMove.enabled": "always",
+        // Testing
+        "vitest.enable": true,
+        // Tailwind
+        "tailwindCSS.includeLanguages": {
+          "typescript": "javascript",
+          "typescriptreact": "javascript"
+        },
+        "tailwindCSS.experimental.classRegex": [
+          ["cva\\(([^)]*)\\)", "[\"'`]([^\"'`]*).*?[\"'`]"],
+          ["cn\\(([^)]*)\\)", "[\"'`]([^\"'`]*).*?[\"'`]"]
+        ],
+        // Editor
+        "editor.rulers": [100],
+        "files.trimTrailingWhitespace": true,
+        "files.insertFinalNewline": true,
+        // Terminal
+        "terminal.integrated.defaultProfile.linux": "zsh",
+        // npm
+        "npm.packageManager": "pnpm"
+      },
+      "extensions": [
+        // TypeScript/JavaScript
+        "ms-vscode.vscode-typescript-next",
+        "biomejs.biome",
+        "dbaeumer.vscode-eslint",
+        // React
+        "dsznajder.es7-react-js-snippets",
+        "styled-components.vscode-styled-components",
+        // Tailwind
+        "bradlc.vscode-tailwindcss",
+        // Testing
+        "vitest.explorer",
+        "ms-playwright.playwright",
+        // Git
+        "eamodio.gitlens",
+        "mhutchie.git-graph",
+        // Docker
+        "ms-azuretools.vscode-docker",
+        // General
+        "streetsidesoftware.code-spell-checker",
+        "usernamehw.errorlens",
+        "oderwat.indent-rainbow",
+        "formulahendry.auto-rename-tag",
+        // Claude
+        "anthropic.claude-code"
+      ]
+    }
+  },
+
+  // Lifecycle hooks
+  "postCreateCommand": "echo '✅ Node.js dev container ready!'",
+  
+  // Forward ports
+  "forwardPorts": [
+    3000,  // Vite/Next.js dev server
+    4000,  // Alternative dev server
+    5173,  // Vite default
+    6006,  // Storybook
+    8080   // General
+  ],
+
+  // Port labels
+  "portsAttributes": {
+    "3000": { "label": "Dev Server", "onAutoForward": "notify" },
+    "5173": { "label": "Vite", "onAutoForward": "notify" },
+    "6006": { "label": "Storybook", "onAutoForward": "notify" }
+  }
+}

@@ -1,0 +1,28 @@
+# Base Extensions - Common to all dev environments
+# These are installed inside containers for "Attach to Container" workflow
+# Format: publisher.extension-name
+
+# Git
+eamodio.gitlens
+mhutchie.git-graph
+
+# Docker
+ms-azuretools.vscode-docker
+
+# General Productivity
+streetsidesoftware.code-spell-checker
+usernamehw.errorlens
+oderwat.indent-rainbow
+gruntfuggly.todo-tree
+
+# File/Format Support
+tamasfe.even-better-toml
+redhat.vscode-yaml
+esbenp.prettier-vscode
+
+# Remote Development
+ms-vscode-remote.remote-containers
+ms-vscode-remote.remote-ssh
+
+# AI/Claude (if available on Open VSX)
+# anthropic.claude-code  # May not be on Open VSX
