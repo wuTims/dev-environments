@@ -57,9 +57,6 @@
   "customizations": {
     "vscode": {
       "settings": {
-        // Terminal font (Nerd Font for icons in eza, git, etc.)
-        "terminal.integrated.fontFamily": "MesloLGS NF, Menlo, Monaco, 'Courier New', monospace",
-        "terminal.integrated.fontSize": 13,
         // Python
         "python.defaultInterpreterPath": "/home/ubuntu/.ml-tools/bin/python",
         "[python]": {

@@ -101,15 +101,6 @@ RUN curl -fsSL https://packages.cloud.google.com/apt/doc/apt-key.gpg | gpg --dea
     && rm -rf /var/lib/apt/lists/*
 
 # ============================================
-# Nerd Font (for terminal icons with eza)
-# ============================================
-RUN mkdir -p /usr/share/fonts/truetype/meslo \
-    && curl -fsSL "https://github.com/ryanoasis/nerd-fonts/releases/latest/download/Meslo.tar.xz" -o /tmp/Meslo.tar.xz \
-    && tar -xf /tmp/Meslo.tar.xz -C /usr/share/fonts/truetype/meslo \
-    && fc-cache -fv \
-    && rm -f /tmp/Meslo.tar.xz
-
-# ============================================
 # Node.js (required for Claude Code and MCPs)
 # ============================================
 ARG NODE_VERSION=22
