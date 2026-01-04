@@ -14,10 +14,22 @@
   "mounts": [
     // Docker socket for DooD
     "source=/var/run/docker.sock,target=/var/run/docker.sock,type=bind",
-    // Persist ML data/models between container rebuilds
-    "source=ml-data,target=/home/ubuntu/data,type=volume",
-    "source=ml-models,target=/home/ubuntu/models,type=volume"
+    // Persist editor server extensions across rebuilds (supports VS Code, Cursor, etc.)
+    "source=vscode-server-extensions,target=/home/ubuntu/.vscode-server/extensions,type=volume",
+    "source=cursor-server-extensions,target=/home/ubuntu/.cursor-server/extensions,type=volume",
+    // Workspace bind mount to host directory (survives container rebuilds)
+    // Creates ~/devcontainers/ml-training on host if it doesn't exist
+    "source=${localEnv:HOME}/devcontainers/ml-training,target=/home/ubuntu/workspace,type=bind,consistency=cached",
+    // Persist ML data/models on host as well
+    "source=${localEnv:HOME}/devcontainers/ml-training/data,target=/home/ubuntu/data,type=bind,consistency=cached",
+    "source=${localEnv:HOME}/devcontainers/ml-training/models,target=/home/ubuntu/models,type=bind,consistency=cached"
   ],
+
+  // Default workspace folder inside container
+  "workspaceFolder": "/home/ubuntu/workspace",
+
+  // Create host directories if they don't exist
+  "initializeCommand": "mkdir -p \"${localEnv:HOME}/devcontainers/ml-training\" \"${localEnv:HOME}/devcontainers/ml-training/data\" \"${localEnv:HOME}/devcontainers/ml-training/models\"",
 
   // Run as developer user
   "remoteUser": "ubuntu",
@@ -45,8 +57,11 @@
   "customizations": {
     "vscode": {
       "settings": {
+        // Terminal font (Nerd Font for icons in eza, git, etc.)
+        "terminal.integrated.fontFamily": "MesloLGS NF, Menlo, Monaco, 'Courier New', monospace",
+        "terminal.integrated.fontSize": 13,
         // Python
-        "python.defaultInterpreterPath": "/home/developer/.ml-tools/bin/python",
+        "python.defaultInterpreterPath": "/home/ubuntu/.ml-tools/bin/python",
         "[python]": {
           "editor.defaultFormatter": "charliermarsh.ruff",
           "editor.formatOnSave": true
@@ -60,6 +75,8 @@
         "python.testing.pytestEnabled": true,
         // Editor
         "editor.rulers": [88, 120],
+        "files.trimTrailingWhitespace": true,
+        "files.insertFinalNewline": true,
         // Terminal
         "terminal.integrated.defaultProfile.linux": "zsh"
       },
@@ -81,7 +98,16 @@
         "mhutchie.git-graph",
         // Docker
         "ms-azuretools.vscode-docker",
-        // Claude
+        // General productivity
+        "streetsidesoftware.code-spell-checker",
+        "usernamehw.errorlens",
+        "oderwat.indent-rainbow",
+        "gruntfuggly.todo-tree",
+        // File/format support
+        "tamasfe.even-better-toml",
+        "redhat.vscode-yaml",
+        "esbenp.prettier-vscode",
+        // AI
         "anthropic.claude-code"
       ]
     }

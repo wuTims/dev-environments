@@ -103,11 +103,6 @@ ff() {
     find . -name "*$1*" 2>/dev/null
 }
 
-# Git commit with message
-gcam() {
-    git add --all && git commit -m "$*"
-}
-
 # Docker shell into container
 dsh() {
     docker exec -it "$1" /bin/bash || docker exec -it "$1" /bin/sh
@@ -141,4 +136,7 @@ echo ""
 echo "🚀 Dev environment ready!"
 echo "   Claude Code: 'claude' or 'c'"
 echo "   MCP servers: 'claude mcp list'"
+echo ""
+echo "   ℹ️  If icons appear as boxes, install Nerd Font on your Mac:"
+echo "      brew install --cask font-meslo-lg-nerd-font"
 echo ""

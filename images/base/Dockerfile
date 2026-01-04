@@ -72,6 +72,44 @@ RUN curl -fsSL https://download.docker.com/linux/ubuntu/gpg | gpg --dearmor -o /
     && rm -rf /var/lib/apt/lists/*
 
 # ============================================
+# GitHub CLI
+# ============================================
+RUN curl -fsSL https://cli.github.com/packages/githubcli-archive-keyring.gpg | dd of=/usr/share/keyrings/githubcli-archive-keyring.gpg \
+    && chmod go+r /usr/share/keyrings/githubcli-archive-keyring.gpg \
+    && echo "deb [arch=$(dpkg --print-architecture) signed-by=/usr/share/keyrings/githubcli-archive-keyring.gpg] https://cli.github.com/packages stable main" > /etc/apt/sources.list.d/github-cli.list \
+    && apt-get update \
+    && apt-get install -y --no-install-recommends gh \
+    && rm -rf /var/lib/apt/lists/*
+
+# ============================================
+# AWS CLI
+# ============================================
+RUN ARCH=$(dpkg --print-architecture) \
+    && if [ "$ARCH" = "amd64" ]; then AWS_ARCH="x86_64"; else AWS_ARCH="aarch64"; fi \
+    && curl -fsSL "https://awscli.amazonaws.com/awscli-exe-linux-${AWS_ARCH}.zip" -o "/tmp/awscliv2.zip" \
+    && unzip -q /tmp/awscliv2.zip -d /tmp \
+    && /tmp/aws/install \
+    && rm -rf /tmp/aws /tmp/awscliv2.zip
+
+# ============================================
+# Google Cloud CLI
+# ============================================
+RUN curl -fsSL https://packages.cloud.google.com/apt/doc/apt-key.gpg | gpg --dearmor -o /usr/share/keyrings/cloud.google.gpg \
+    && echo "deb [signed-by=/usr/share/keyrings/cloud.google.gpg] https://packages.cloud.google.com/apt cloud-sdk main" > /etc/apt/sources.list.d/google-cloud-sdk.list \
+    && apt-get update \
+    && apt-get install -y --no-install-recommends google-cloud-cli \
+    && rm -rf /var/lib/apt/lists/*
+
+# ============================================
+# Nerd Font (for terminal icons with eza)
+# ============================================
+RUN mkdir -p /usr/share/fonts/truetype/meslo \
+    && curl -fsSL "https://github.com/ryanoasis/nerd-fonts/releases/latest/download/Meslo.tar.xz" -o /tmp/Meslo.tar.xz \
+    && tar -xf /tmp/Meslo.tar.xz -C /usr/share/fonts/truetype/meslo \
+    && fc-cache -fv \
+    && rm -f /tmp/Meslo.tar.xz
+
+# ============================================
 # Node.js (required for Claude Code and MCPs)
 # ============================================
 ARG NODE_VERSION=22
@@ -132,6 +170,17 @@ ENV PATH="/home/${USERNAME}/.local/bin:${PATH}"
 RUN uv tool install specify-cli --from git+https://github.com/github/spec-kit.git
 
 # ============================================
+# Bun (fast JavaScript runtime and package manager)
+# Required for claude-mem plugin
+# ============================================
+RUN curl -fsSL https://bun.sh/install | bash \
+    && echo 'export BUN_INSTALL="$HOME/.bun"' >> ~/.zshrc \
+    && echo 'export PATH="$BUN_INSTALL/bin:$PATH"' >> ~/.zshrc
+
+ENV BUN_INSTALL="/home/${USERNAME}/.bun"
+ENV PATH="${BUN_INSTALL}/bin:${PATH}"
+
+# ============================================
 # Claude Code (native binary - recommended 2025 method)
 # ============================================
 RUN curl -fsSL https://claude.ai/install.sh | bash \
@@ -147,6 +196,11 @@ ENV PATH="/home/${USERNAME}/.claude/bin:${PATH}"
 # ============================================
 USER root
 RUN npm install -g claude-mem
+
+# ============================================
+# Cloudflare CLI (Wrangler)
+# ============================================
+RUN npm install -g wrangler
 USER $USERNAME
 
 # ============================================

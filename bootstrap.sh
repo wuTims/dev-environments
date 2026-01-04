@@ -351,6 +351,37 @@ EOF
 }
 
 # ============================================
+# Install Nerd Font for terminal icons
+# ============================================
+install_nerd_font() {
+    log_step "Checking Nerd Font (for terminal icons)..."
+
+    case $OS in
+        macos)
+            # Check if font is already installed
+            if fc-list 2>/dev/null | grep -qi "MesloLGS NF" || \
+               ls ~/Library/Fonts/*MesloLG*Nerd* &>/dev/null 2>&1 || \
+               ls /Library/Fonts/*MesloLG*Nerd* &>/dev/null 2>&1; then
+                log_info "Nerd Font already installed"
+                return
+            fi
+
+            if command -v brew &> /dev/null; then
+                log_info "Installing MesloLGS Nerd Font via Homebrew..."
+                brew install --cask font-meslo-lg-nerd-font
+                log_info "Nerd Font installed successfully"
+            else
+                log_warn "Install font manually: brew install --cask font-meslo-lg-nerd-font"
+            fi
+            ;;
+        wsl|linux)
+            # Nerd Font is installed inside the container, not needed on Linux host for WSL
+            log_info "Nerd Fonts are installed inside containers"
+            ;;
+    esac
+}
+
+# ============================================
 # Main
 # ============================================
 main() {
@@ -367,6 +398,7 @@ main() {
     install_docker
     install_editor
     install_editor_extensions
+    install_nerd_font
     configure_git
     
     # Only setup ghcr if images are public or user wants to auth

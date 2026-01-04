@@ -4,12 +4,15 @@ services:
   dev:
     image: ghcr.io/wutims/node-dev:latest
     volumes:
-      # Workspace
-      - ..:/home/ubuntu/workspace:cached
+      # Workspace bind mount to host directory (survives container rebuilds)
+      # Run: mkdir -p ~/devcontainers/general
+      - ~/devcontainers/general:/home/ubuntu/workspace:cached
       # Docker socket for DooD
       - /var/run/docker.sock:/var/run/docker.sock
+      # Persist editor server extensions (supports VS Code, Cursor, etc.)
+      - vscode-server-extensions:/home/ubuntu/.vscode-server/extensions
+      - cursor-server-extensions:/home/ubuntu/.cursor-server/extensions
       # Persist various caches
-      - dev-node-modules:/home/ubuntu/workspace/node_modules
       - dev-pnpm-store:/home/ubuntu/.local/share/pnpm/store
       - dev-pip-cache:/home/ubuntu/.cache/pip
     environment:
@@ -60,7 +63,8 @@ services:
 volumes:
   postgres-data:
   redis-data:
-  dev-node-modules:
+  vscode-server-extensions:
+  cursor-server-extensions:
   dev-pnpm-store:
   dev-pip-cache:
 

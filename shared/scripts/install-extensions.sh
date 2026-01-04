@@ -119,25 +119,93 @@ download_from_openvsx() {
 }
 
 # ============================================
+# Get all possible server extension directories
+# Different editors use different paths
+# ============================================
+get_extension_dirs() {
+    local dirs=(
+        "$HOME/.vscode-server/extensions"      # VS Code
+        "$HOME/.cursor-server/extensions"      # Cursor
+        "$HOME/.windsurf-server/extensions"    # Windsurf
+        "$HOME/.vscodium-server/extensions"    # VSCodium
+    )
+    echo "${dirs[@]}"
+}
+
+# ============================================
 # Install extensions for "Attach to Container" workflow
-# These go in .vscode-server/extensions inside container
+# Installs to ALL known editor server directories
 # ============================================
 install_for_attach_workflow() {
     local extensions_file="${1:-$HOME/.config/extensions/base-extensions.txt}"
-    local target_dir="$HOME/.vscode-server/extensions"
-    
-    mkdir -p "$target_dir"
-    
+
     if [ ! -f "$extensions_file" ]; then
         log_warn "No extensions file at $extensions_file"
         return
     fi
-    
+
+    # Get all extension directories
+    local dirs=($(get_extension_dirs))
+
     log_info "Installing extensions for Attach to Container workflow..."
-    
+    log_info "Target directories: ${dirs[*]}"
+
+    # Create all directories
+    for dir in "${dirs[@]}"; do
+        mkdir -p "$dir"
+    done
+
+    # Read extensions and install to all directories
     while IFS= read -r ext || [ -n "$ext" ]; do
         [[ -z "$ext" || "$ext" =~ ^# ]] && continue
-        download_from_openvsx "$ext" "$target_dir"
+
+        # Download once to temp, then copy to all directories
+        local temp_dir=$(mktemp -d)
+
+        # Parse publisher.extension format
+        local publisher="${ext%%.*}"
+        local extension="${ext#*.}"
+
+        log_info "Downloading $ext from Open VSX..."
+
+        # Get latest version info
+        local api_url="https://open-vsx.org/api/${publisher}/${extension}"
+        local version_info=$(curl -s "$api_url" 2>/dev/null)
+
+        if [ -z "$version_info" ] || echo "$version_info" | grep -q '"error"'; then
+            log_warn "Extension $ext not found on Open VSX"
+            rm -rf "$temp_dir"
+            continue
+        fi
+
+        local version=$(echo "$version_info" | jq -r '.version // empty' 2>/dev/null)
+        local download_url=$(echo "$version_info" | jq -r '.files.download // empty' 2>/dev/null)
+
+        if [ -z "$download_url" ] || [ "$download_url" = "null" ]; then
+            log_warn "Could not get download URL for $ext"
+            rm -rf "$temp_dir"
+            continue
+        fi
+
+        # Download and extract once
+        local vsix_file="$temp_dir/${ext}.vsix"
+        curl -sL "$download_url" -o "$vsix_file" 2>/dev/null
+
+        if [ -f "$vsix_file" ]; then
+            unzip -q "$vsix_file" -d "$temp_dir/extracted" 2>/dev/null || true
+
+            if [ -d "$temp_dir/extracted/extension" ]; then
+                # Copy to all editor directories
+                for dir in "${dirs[@]}"; do
+                    local ext_dir="$dir/${publisher}.${extension}-${version}"
+                    mkdir -p "$ext_dir"
+                    cp -r "$temp_dir/extracted/extension/"* "$ext_dir/" 2>/dev/null || true
+                done
+                log_info "Installed $ext v$version to all editor directories"
+            fi
+        fi
+
+        rm -rf "$temp_dir"
     done < "$extensions_file"
 }
 

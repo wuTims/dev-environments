@@ -22,12 +22,39 @@ log_error() { echo -e "${RED}[ERROR]${NC} $1"; }
 fix_permissions() {
     # Docker socket permissions
     if [ -S /var/run/docker.sock ]; then
-        DOCKER_GID=$(stat -c '%g' /var/run/docker.sock)
-        if ! getent group docker-host > /dev/null 2>&1; then
-            sudo groupadd -g "$DOCKER_GID" docker-host 2>/dev/null || true
+        log_info "Docker socket found, configuring permissions..."
+
+        # Get the GID of the docker socket
+        DOCKER_GID=$(stat -c '%g' /var/run/docker.sock 2>/dev/null || stat -f '%g' /var/run/docker.sock 2>/dev/null)
+
+        if [ -n "$DOCKER_GID" ]; then
+            # Check if user is already in a group that owns the socket
+            if id -G | grep -qw "$DOCKER_GID"; then
+                log_info "User already has Docker socket access"
+            else
+                # Try to create/use docker-host group with the socket's GID
+                if ! getent group docker-host > /dev/null 2>&1; then
+                    sudo groupadd -g "$DOCKER_GID" docker-host 2>/dev/null || true
+                fi
+                sudo usermod -aG docker-host "$(whoami)" 2>/dev/null || true
+            fi
         fi
-        sudo usermod -aG docker-host "$(whoami)" 2>/dev/null || true
-        log_info "Docker socket permissions configured"
+
+        # For macOS Docker Desktop: socket may have root:root ownership with 0660 permissions
+        # Try to make it accessible if docker commands fail
+        if ! docker info > /dev/null 2>&1; then
+            log_warn "Docker socket not accessible, attempting chmod fix..."
+            sudo chmod 666 /var/run/docker.sock 2>/dev/null || true
+        fi
+
+        # Verify docker is working
+        if docker info > /dev/null 2>&1; then
+            log_info "Docker socket permissions configured successfully"
+        else
+            log_warn "Docker socket may require reconnection - try restarting the container"
+        fi
+    else
+        log_warn "Docker socket not found at /var/run/docker.sock"
     fi
 }
 

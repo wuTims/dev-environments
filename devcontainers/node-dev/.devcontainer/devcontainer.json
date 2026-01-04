@@ -13,8 +13,20 @@
 
   // Mount Docker socket for DooD
   "mounts": [
-    "source=/var/run/docker.sock,target=/var/run/docker.sock,type=bind"
+    "source=/var/run/docker.sock,target=/var/run/docker.sock,type=bind",
+    // Persist editor server extensions across rebuilds (supports VS Code, Cursor, etc.)
+    "source=vscode-server-extensions,target=/home/ubuntu/.vscode-server/extensions,type=volume",
+    "source=cursor-server-extensions,target=/home/ubuntu/.cursor-server/extensions,type=volume",
+    // Workspace bind mount to host directory (survives container rebuilds)
+    // Creates ~/devcontainers/node-dev on host if it doesn't exist
+    "source=${localEnv:HOME}/devcontainers/node-dev,target=/home/ubuntu/workspace,type=bind,consistency=cached"
   ],
+
+  // Default workspace folder inside container
+  "workspaceFolder": "/home/ubuntu/workspace",
+
+  // Create host directory if it doesn't exist
+  "initializeCommand": "mkdir -p \"${localEnv:HOME}/devcontainers/node-dev\"",
 
   // Run as ubuntu user
   "remoteUser": "ubuntu",
@@ -33,6 +45,9 @@
   "customizations": {
     "vscode": {
       "settings": {
+        // Terminal font (Nerd Font for icons in eza, git, etc.)
+        "terminal.integrated.fontFamily": "MesloLGS NF, Menlo, Monaco, 'Courier New', monospace",
+        "terminal.integrated.fontSize": 13,
         // TypeScript/JavaScript
         "[typescript]": {
           "editor.defaultFormatter": "biomejs.biome",
@@ -101,12 +116,17 @@
         "mhutchie.git-graph",
         // Docker
         "ms-azuretools.vscode-docker",
-        // General
+        // General productivity
         "streetsidesoftware.code-spell-checker",
         "usernamehw.errorlens",
         "oderwat.indent-rainbow",
+        "gruntfuggly.todo-tree",
         "formulahendry.auto-rename-tag",
-        // Claude
+        // File/format support
+        "tamasfe.even-better-toml",
+        "redhat.vscode-yaml",
+        "esbenp.prettier-vscode",
+        // AI
         "anthropic.claude-code"
       ]
     }

@@ -1,10 +1,13 @@
 {
   "name": "General Development (Python + Node)",
-  
+
   // Use docker-compose for multi-container setup
   "dockerComposeFile": "docker-compose.yml",
   "service": "dev",
   "workspaceFolder": "/home/ubuntu/workspace",
+
+  // Create host directory if it doesn't exist
+  "initializeCommand": "mkdir -p \"${localEnv:HOME}/devcontainers/general\"",
 
   // Run as ubuntu user
   "remoteUser": "ubuntu",
@@ -13,6 +16,9 @@
   "customizations": {
     "vscode": {
       "settings": {
+        // Terminal font (Nerd Font for icons in eza, git, etc.)
+        "terminal.integrated.fontFamily": "MesloLGS NF, Menlo, Monaco, 'Courier New', monospace",
+        "terminal.integrated.fontSize": 13,
         // Python
         "python.defaultInterpreterPath": "/usr/bin/python",
         "[python]": {
@@ -30,6 +36,8 @@
         },
         // General
         "editor.rulers": [88, 100],
+        "files.trimTrailingWhitespace": true,
+        "files.insertFinalNewline": true,
         "terminal.integrated.defaultProfile.linux": "zsh",
         "npm.packageManager": "pnpm"
       },
@@ -46,9 +54,19 @@
         "littlefoxteam.vscode-python-test-adapter",
         // Git
         "eamodio.gitlens",
+        "mhutchie.git-graph",
         // Docker
         "ms-azuretools.vscode-docker",
-        // Claude
+        // General productivity
+        "streetsidesoftware.code-spell-checker",
+        "usernamehw.errorlens",
+        "oderwat.indent-rainbow",
+        "gruntfuggly.todo-tree",
+        // File/format support
+        "tamasfe.even-better-toml",
+        "redhat.vscode-yaml",
+        "esbenp.prettier-vscode",
+        // AI
         "anthropic.claude-code"
       ]
     }
