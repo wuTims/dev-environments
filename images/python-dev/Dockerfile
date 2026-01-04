@@ -86,9 +86,9 @@ RUN echo '# Python dev tools' >> ~/.zshrc \
 # ============================================
 # Python configuration files
 # ============================================
-COPY --chown=$USERNAME:$USERNAME config/pyproject.toml.template /home/$USERNAME/.config/python/pyproject.toml.template
-COPY --chown=$USERNAME:$USERNAME config/ruff.toml /home/$USERNAME/.config/ruff/ruff.toml
-COPY --chown=$USERNAME:$USERNAME config/mypy.ini /home/$USERNAME/.config/mypy/mypy.ini
+COPY --chown=$USERNAME:$USERNAME ./python-dev/config/pyproject.toml.template /home/$USERNAME/.config/python/pyproject.toml.template
+COPY --chown=$USERNAME:$USERNAME ./python-dev/config/ruff.toml /home/$USERNAME/.config/ruff/ruff.toml
+COPY --chown=$USERNAME:$USERNAME ./python-dev/config/mypy.ini /home/$USERNAME/.config/mypy/mypy.ini
 
 # ============================================
 # Python-specific VS Code extensions
