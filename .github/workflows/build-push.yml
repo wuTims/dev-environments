@@ -21,7 +21,7 @@ on:
 
 env:
   REGISTRY: ghcr.io
-  NAMESPACE: ${{ github.repository_owner }}
+  NAMESPACE: wutims
 
 jobs:
   # ============================================
