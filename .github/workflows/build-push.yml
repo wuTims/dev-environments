@@ -157,7 +157,7 @@ jobs:
       - name: Build and push python-dev
         uses: docker/build-push-action@v5
         with:
-          context: ./images/python-dev
+          context: .
           file: ./images/python-dev/Dockerfile
           platforms: linux/amd64,linux/arm64
           push: ${{ github.event_name != 'pull_request' }}
@@ -215,7 +215,7 @@ jobs:
       - name: Build and push node-dev
         uses: docker/build-push-action@v5
         with:
-          context: ./images/node-dev
+          context: .
           file: ./images/node-dev/Dockerfile
           platforms: linux/amd64,linux/arm64
           push: ${{ github.event_name != 'pull_request' }}
@@ -273,7 +273,7 @@ jobs:
       - name: Build and push ml-training
         uses: docker/build-push-action@v5
         with:
-          context: ./images/ml-training
+          context: .
           file: ./images/ml-training/Dockerfile
           platforms: linux/amd64,linux/arm64
           push: ${{ github.event_name != 'pull_request' }}
