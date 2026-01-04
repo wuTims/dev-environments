@@ -169,7 +169,7 @@ RUN mkdir -p ~/.config/claude ~/.claude
 
 # DeepWiki MCP (HTTP transport - no local server needed)
 # This will be configured on first run via entrypoint
-COPY --chown=$USERNAME:$USERNAME shared/mcp/base-mcp.json /home/$USERNAME/.config/claude/.mcp.json
+COPY --chown=$USERNAME:$USERNAME shared/mcp/base-mcp.json /home/$USERNAME/.claude/settings.json
 
 # ============================================
 # Shell configuration

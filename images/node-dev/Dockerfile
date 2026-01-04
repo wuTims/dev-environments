@@ -116,7 +116,7 @@ RUN mkdir -p ~/.npm-cache/tanstack \
 # ============================================
 # MCP Configuration (Playwright + DeepWiki)
 # ============================================
-COPY --chown=$USERNAME:$USERNAME ./node-dev/config/node-mcp.json /home/$USERNAME/.config/claude/.mcp.json
+COPY --chown=$USERNAME:$USERNAME images/node-dev/config/node-mcp.json /home/$USERNAME/.claude/settings.json
 
 # ============================================
 # Node-specific VS Code extensions
@@ -126,10 +126,10 @@ COPY --chown=$USERNAME:$USERNAME ../shared/extensions/node-extensions.txt /home/
 # ============================================
 # Configuration templates
 # ============================================
-COPY --chown=$USERNAME:$USERNAME ./node-dev/config/tsconfig.json.template /home/$USERNAME/.config/node/tsconfig.json.template
-COPY --chown=$USERNAME:$USERNAME ./node-dev/config/eslint.config.js.template /home/$USERNAME/.config/node/eslint.config.js.template
-COPY --chown=$USERNAME:$USERNAME ./node-dev/config/tailwind.config.js.template /home/$USERNAME/.config/node/tailwind.config.js.template
-COPY --chown=$USERNAME:$USERNAME ./node-dev/config/vitest.config.ts.template /home/$USERNAME/.config/node/vitest.config.ts.template
+COPY --chown=$USERNAME:$USERNAME images/node-dev/config/tsconfig.json.template /home/$USERNAME/.config/node/tsconfig.json.template
+COPY --chown=$USERNAME:$USERNAME images/node-dev/config/eslint.config.js.template /home/$USERNAME/.config/node/eslint.config.js.template
+COPY --chown=$USERNAME:$USERNAME images/node-dev/config/tailwind.config.js.template /home/$USERNAME/.config/node/tailwind.config.js.template
+COPY --chown=$USERNAME:$USERNAME images/node-dev/config/vitest.config.ts.template /home/$USERNAME/.config/node/vitest.config.ts.template
 
 # ============================================
 # Shell aliases
