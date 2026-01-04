@@ -19,13 +19,8 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     # HDF5 for data storage
     libhdf5-dev \
     # Graphics libraries
-    libgl1-mesa-glx \
+    libgl1 \
     libglib2.0-0 \
-    # LaTeX for matplotlib
-    texlive-latex-base \
-    texlive-fonts-recommended \
-    dvipng \
-    cm-super \
     && rm -rf /var/lib/apt/lists/*
 
 # ============================================

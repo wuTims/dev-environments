@@ -87,33 +87,6 @@ RUN npx playwright install-deps chromium
 USER $USERNAME
 
 # ============================================
-# TanStack & React tooling (pre-cache)
-# ============================================
-RUN mkdir -p ~/.npm-cache/tanstack \
-    && cd ~/.npm-cache/tanstack \
-    && pnpm init -y \
-    && pnpm add \
-        @tanstack/react-query \
-        @tanstack/react-router \
-        @tanstack/react-table \
-        @tanstack/react-form \
-        @tanstack/start \
-        react \
-        react-dom \
-        tailwindcss \
-        postcss \
-        autoprefixer \
-        @tailwindcss/forms \
-        @tailwindcss/typography \
-        @tailwindcss/container-queries \
-        clsx \
-        class-variance-authority \
-        tailwind-merge \
-        lucide-react \
-        zod \
-    && rm -rf ~/.npm-cache/tanstack
-
-# ============================================
 # MCP Configuration (Playwright + DeepWiki)
 # ============================================
 COPY --chown=$USERNAME:$USERNAME images/node-dev/config/node-mcp.json /home/$USERNAME/.claude/settings.json
