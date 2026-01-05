@@ -207,22 +207,23 @@ COPY --chown=$USERNAME:$USERNAME shared/extensions/base-extensions.txt /home/$US
 RUN mkdir -p /home/$USERNAME/.vscode-server/extensions
 
 # ============================================
+# Dotfiles (from github.com/wuTims/dotfiles)
+# ============================================
+# Clone dotfiles and copy config files
+# Using copy instead of symlink for container portability
+RUN git clone --depth 1 https://github.com/wuTims/dotfiles.git /tmp/dotfiles \
+    # Copy Claude Code config (commands, agents, settings)
+    && cp -r /tmp/dotfiles/.claude ~/.claude \
+    # Copy zshrc (replaces default)
+    && cp /tmp/dotfiles/.zshrc ~/.zshrc \
+    # Cleanup
+    && rm -rf /tmp/dotfiles
+
+# ============================================
 # MCP Server Configuration
 # ============================================
-# Create Claude config directories
-# ~/.claude/ = Claude Code data directory
-# ~/.claude.json = MCP servers and user preferences (NOT settings.json!)
-RUN mkdir -p ~/.config/claude ~/.claude
-
-# DeepWiki MCP (HTTP transport - no local server needed)
-# MCP servers go in ~/.claude.json, NOT ~/.claude/settings.json
+# MCP servers go in ~/.claude.json (separate from ~/.claude/ directory)
 COPY --chown=$USERNAME:$USERNAME shared/mcp/base-mcp.json /home/$USERNAME/.claude.json
-
-# ============================================
-# Shell configuration
-# ============================================
-COPY --chown=$USERNAME:$USERNAME shared/dotfiles/.zshrc.template /home/$USERNAME/.zshrc.custom
-RUN cat /home/$USERNAME/.zshrc.custom >> /home/$USERNAME/.zshrc
 
 # ============================================
 # Workspace setup
