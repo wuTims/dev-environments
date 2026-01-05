@@ -208,11 +208,9 @@ run_container() {
 
     local full_image="$REGISTRY/$NAMESPACE/$image_type:latest"
 
-    # Check if image exists locally, pull if not
-    if ! docker image inspect "$full_image" > /dev/null 2>&1; then
-        log_info "Image not found locally, pulling..."
-        docker pull "$full_image"
-    fi
+    # Always pull latest (docker only downloads changed layers)
+    log_info "Pulling latest image..."
+    docker pull "$full_image"
 
     # Check if container already exists
     if docker container inspect "$container_name" > /dev/null 2>&1; then
