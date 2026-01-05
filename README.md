@@ -4,69 +4,97 @@ Pre-built, multi-arch Docker images for consistent development across M-series M
 
 **Works with:** VS Code, Cursor, Windsurf, VSCodium, and any VS Code-compatible editor.
 
+## Prerequisites
+
+Before using dev-environments, install:
+
+1. **Docker** - [Docker Desktop](https://www.docker.com/products/docker-desktop/) (Mac/Windows) or [Docker Engine](https://docs.docker.com/engine/install/) (Linux)
+2. **Editor** - [VS Code](https://code.visualstudio.com/), [Cursor](https://cursor.sh/), or compatible editor
+3. **Git** - Usually pre-installed on Mac/Linux
+
 ## Quick Start
 
-### First-Time Setup (Any Machine)
+### First-Time Setup
 
 ```bash
 # Clone this repo
-git clone https://github.com/YOUR_USERNAME/dev-environments.git
+git clone https://github.com/wutims/dev-environments.git
 cd dev-environments
 
-# Run bootstrap (installs Docker, detects/installs editor, configures everything)
+# Run bootstrap (pulls images, sets up convenience scripts)
 ./bootstrap.sh
 ```
 
-### Start Developing
+### Run a Dev Container
 
 ```bash
-# Clone any project
-git clone https://github.com/your/project.git
-cd project
+# Start a Python dev container named "my-project"
+./container.sh run python-dev my-project
 
-# Copy the devcontainer you need
-cp -r ~/dev-environments/devcontainers/python-dev/.devcontainer .
+# Start a Node.js container
+./container.sh run node-dev frontend
 
-# Open in your editor - it will auto-detect and offer to reopen in container
-cursor .  # or: code . / windsurf . / codium .
+# Start ML training environment
+./container.sh run ml-training experiment-001
 ```
 
-### "Attach to Running Container" Workflow
-
-If you prefer running containers manually and attaching:
+### Attach Your Editor
 
 ```bash
-# Start container
-docker run -d --name my-dev \
-  -v $(pwd):/home/developer/workspace \
-  -v /var/run/docker.sock:/var/run/docker.sock \
-  ghcr.io/YOUR_USERNAME/python-dev:latest \
-  sleep infinity
+# Get a shell in the running container
+./container.sh shell my-project
 
-# In your editor: "Attach to Running Container" -> my-dev
-# Extensions are pre-installed inside the container!
+# Or in your editor:
+# 1. Open Command Palette (Cmd/Ctrl + Shift + P)
+# 2. Select "Dev Containers: Attach to Running Container"
+# 3. Choose your container
 ```
+
+### Manage Containers
+
+```bash
+./container.sh list              # Show running containers
+./container.sh stop my-project   # Stop container (data persists)
+./container.sh rm my-project     # Remove container (data still persists)
+./container.sh pull              # Pull latest images
+```
+
+## Where Data Lives
+
+All container data persists at `~/devcontainers/<container-name>/`:
+
+```
+~/devcontainers/
+├── my-project/
+│   └── workspace/          # Your code, mounted at /home/ubuntu/workspace
+├── ml-experiment/
+│   ├── workspace/
+│   ├── data/               # ML data directory
+│   └── models/             # Trained models
+```
+
+This survives container stops, restarts, and even removal.
 
 ## Available Images
 
 | Image | Base | Key Tools | Use Cases |
 |-------|------|-----------|-----------|
-| `base` | Ubuntu 24.04 | Git, Docker CLI, Claude Code, DeepWiki MCP, spec-kit, claude-mem | Foundation for all others |
-| `python-dev` | base | Python 3.12, uv, ruff, mypy, pytest, FastAPI | Backend, scripts, APIs |
-| `node-dev` | base | Node 22, pnpm, TypeScript, React, Tailwind, Vitest, Playwright MCP | Frontend, full-stack |
-| `ml-training` | python-dev | PyTorch, CUDA, Jupyter, MLflow | Model training |
+| `base` | Ubuntu 24.04 | Git, Docker CLI, Claude Code, spec-kit | Foundation |
+| `python-dev` | base | Python 3.12, uv, ruff, mypy, pytest | Backend, APIs |
+| `node-dev` | base | Node 22, pnpm, TypeScript, Vitest, Playwright | Frontend |
+| `ml-training` | python-dev | PyTorch, Jupyter, MLflow, HuggingFace | ML/AI |
 
 ## Pre-installed Tools
 
-### All Images (Base)
+### All Images
 
 | Tool | Description |
 |------|-------------|
-| **Claude Code** | AI coding assistant (native binary) |
-| **claude-mem** | Persistent memory plugin for Claude Code |
-| **DeepWiki MCP** | GitHub repo documentation via MCP |
-| **spec-kit** | Spec-Driven Development CLI (`specify` command) |
-| **Docker CLI** | For Docker-out-of-Docker workflows |
+| **Claude Code** | AI coding assistant |
+| **DeepWiki MCP** | GitHub documentation via MCP |
+| **spec-kit** | Spec-Driven Development (`specify` CLI) |
+| **Docker CLI** | Docker-out-of-Docker support |
+| **Oh-My-Zsh** | Enhanced shell with plugins |
 
 ### Python Images
 
@@ -75,156 +103,176 @@ docker run -d --name my-dev \
 | **uv** | Fast Python package manager |
 | **ruff** | Linter & formatter |
 | **mypy** | Type checker |
-| **pytest** | Testing framework with coverage |
+| **pytest** | Testing framework |
 
 ### Node Images
 
 | Tool | Description |
 |------|-------------|
 | **pnpm** | Fast package manager |
-| **Playwright** | Browser automation + MCP server |
+| **Playwright** | Browser automation + MCP |
 | **Vitest** | Testing framework |
 | **Biome** | Linter & formatter |
+
+### ML Training
+
+| Tool | Description |
+|------|-------------|
+| **PyTorch** | Deep learning framework |
+| **Jupyter Lab** | Interactive notebooks |
+| **MLflow** | Experiment tracking |
+| **HuggingFace** | transformers, datasets, hub |
+
+## Script Reference
+
+### bootstrap.sh
+
+One-time setup script for new machines:
+
+```bash
+./bootstrap.sh
+```
+
+- Checks prerequisites (Docker, editor)
+- Configures git (if needed)
+- Pulls dev images
+- Installs `devctl` alias to `~/.local/bin`
+
+### container.sh
+
+Container lifecycle management:
+
+```bash
+./container.sh <command> [options]
+
+Commands:
+  run <image> [name]    Run container with automatic volume mounts
+  pull [image]          Pull latest images
+  list                  List running containers
+  stop <name>           Stop container
+  rm <name>             Remove container (data persists)
+  shell <name>          Attach shell to container
+  config                Show Docker Desktop manual config
+```
+
+After bootstrap, you can also use `devctl` as an alias:
+
+```bash
+devctl run python-dev my-api
+devctl shell my-api
+```
+
+## Alternative: Devcontainer Workflow
+
+If you prefer VS Code's native devcontainer integration:
+
+```bash
+# Copy devcontainer config to your project
+cp -r ~/dev-environments/devcontainers/python-dev/.devcontainer ./
+
+# Open project in editor - it will offer to reopen in container
+code .
+```
+
+This uses the same images but lets VS Code manage the container lifecycle.
 
 ## Architecture
 
 ```
 dev-environments/
-├── bootstrap.sh              # One-liner setup for new machines
+├── bootstrap.sh              # First-time setup
+├── container.sh              # Container management
 ├── images/
 │   ├── base/                 # Common foundation
 │   ├── python-dev/           # Python development
 │   ├── node-dev/             # Node/React development
 │   └── ml-training/          # ML/AI training
-├── devcontainers/
-│   ├── python-dev/           # Ready-to-use devcontainer configs
-│   ├── node-dev/
-│   ├── ml-training/
-│   └── general/              # Python + Node combined
+├── devcontainers/            # Ready-to-use devcontainer configs
 ├── shared/
-│   ├── scripts/              # Common shell scripts
-│   ├── dotfiles/             # zshrc, gitconfig templates
+│   ├── scripts/              # Entrypoint, extension installer
 │   ├── mcp/                  # MCP server configurations
-│   └── extensions/           # VS Code extension lists
+│   └── extensions/           # VS Code extension lists + security audit
 └── .github/workflows/
     └── build-push.yml        # Multi-arch image builds
 ```
 
-## Editor Compatibility
-
-Extensions are handled two ways to support different workflows:
-
-1. **"Reopen in Container"**: Extensions defined in `devcontainer.json` are installed by your editor
-2. **"Attach to Running Container"**: Extensions are pre-installed inside the container image
-
-This means extensions work regardless of which VS Code-compatible editor you use.
-
-### Supported Editors
-
-- VS Code
-- Cursor
-- Windsurf
-- VSCodium
-- VS Code Insiders
-- Any editor supporting the devcontainer spec
-
-## Docker-out-of-Docker Support
-
-All images support connecting to the host's Docker engine for integration testing:
-
-```json
-// In devcontainer.json
-"mounts": [
-  "source=/var/run/docker.sock,target=/var/run/docker.sock,type=bind"
-]
-```
-
-This allows spinning up sibling containers for E2E testing without nested Docker overhead.
-
 ## Customization
-
-### Adding Tools to Base
-
-Edit `images/base/Dockerfile` and push. All child images will inherit on next build.
-
-### Project-Specific Extensions
-
-Add to your project's `.devcontainer/devcontainer.json`:
-
-```json
-{
-  "image": "ghcr.io/YOUR_USERNAME/python-dev:latest",
-  "postCreateCommand": "uv pip install -r requirements-dev.txt"
-}
-```
 
 ### MCP Servers
 
-MCPs are pre-configured but can be customized:
+MCPs are pre-configured in `~/.claude.json`:
 
 ```bash
-# Add additional MCP servers
-claude mcp add my-server -- npx @my/mcp-server
-
 # List configured MCPs
 claude mcp list
+
+# Add additional MCP servers
+claude mcp add --scope user my-server -- npx @my/mcp-server
 ```
 
 ### spec-kit
 
 ```bash
-# Initialize spec-driven development
+# Initialize spec-driven development in a project
 specify init my-project
 
-# Check environment
-specify check
-
-# More: specify --help
+# Available after init:
+# /speckit.specify - Define requirements
+# /speckit.plan - Create implementation plan
+# /speckit.tasks - Generate task list
+# /speckit.implement - Execute implementation
 ```
 
-### claude-mem
+### Project-Specific Settings
 
-```bash
-# View memory stream
-open http://localhost:37777
+Create `.devcontainer/devcontainer.json` in your project:
 
-# Search project history
-# Use the mem-search skill in Claude Code
+```json
+{
+  "image": "ghcr.io/wutims/python-dev:latest",
+  "postCreateCommand": "uv pip install -r requirements.txt"
+}
 ```
 
 ## Building Locally
 
 ```bash
 # Build specific image
-docker build -t dev-base ./images/base
+docker build -t python-dev -f images/python-dev/Dockerfile .
 
-# Build with buildx for multi-arch
-docker buildx build --platform linux/amd64,linux/arm64 -t ghcr.io/YOUR_USERNAME/base:latest ./images/base
-```
-
-## Updating Images
-
-Images auto-update via GitHub Actions on push to `main`. To force rebuild:
-
-```bash
-gh workflow run build-push.yml
+# Build with multi-arch
+docker buildx build --platform linux/amd64,linux/arm64 \
+  -t ghcr.io/wutims/python-dev:latest \
+  -f images/python-dev/Dockerfile .
 ```
 
 ## Troubleshooting
 
 ### Container won't start on M-series Mac
-Ensure you're using `linux/arm64` compatible image. Our images support both architectures.
+
+Ensure images are multi-arch compatible (ours are).
 
 ### Claude Code authentication
-Run `claude` inside container and follow OAuth flow. Credentials persist in mounted volume.
+
+Run `claude` inside container and follow OAuth flow. Credentials persist in the container.
 
 ### Docker socket permission denied
-Add your user to docker group or ensure socket has correct permissions in devcontainer.json mounts.
 
-### Extensions not showing in "Attach to Container"
-Extensions are installed in `/home/developer/.vscode-server/extensions`. Mount this as a volume to persist across container restarts:
-```json
-"mounts": [
-  "source=vscode-extensions,target=/home/developer/.vscode-server/extensions,type=volume"
-]
+The entrypoint automatically fixes permissions, but if issues persist:
+
+```bash
+# Inside container
+sudo chmod 666 /var/run/docker.sock
 ```
+
+### MCP servers not showing
+
+Check `~/.claude.json` contains the `mcpServers` config:
+
+```bash
+cat ~/.claude.json | jq '.mcpServers'
+```
+
+### Extensions not showing
+
+Extensions are pre-installed in the image. For "Attach to Container" workflow, they should appear automatically. If not, check the extension volumes are mounted.

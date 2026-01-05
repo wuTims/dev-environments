@@ -10,109 +10,211 @@ set -e
 RED='\033[0;31m'
 GREEN='\033[0;32m'
 YELLOW='\033[1;33m'
+CYAN='\033[0;36m'
 NC='\033[0m' # No Color
 
 log_info() { echo -e "${GREEN}[INFO]${NC} $1"; }
 log_warn() { echo -e "${YELLOW}[WARN]${NC} $1"; }
 log_error() { echo -e "${RED}[ERROR]${NC} $1"; }
+log_retry() { echo -e "${CYAN}[RETRY]${NC} $1"; }
+
+# ============================================
+# Ensure PATH includes all tool locations
+# ============================================
+setup_path() {
+    export PATH="$HOME/.claude/bin:$HOME/.local/bin:$HOME/.bun/bin:$PATH"
+}
 
 # ============================================
 # Fix permissions for mounted volumes
 # ============================================
 fix_permissions() {
-    # Docker socket permissions
-    if [ -S /var/run/docker.sock ]; then
-        log_info "Docker socket found, configuring permissions..."
+    local max_retries=3
+    local retry_delay=2
 
-        # Get the GID of the docker socket
-        DOCKER_GID=$(stat -c '%g' /var/run/docker.sock 2>/dev/null || stat -f '%g' /var/run/docker.sock 2>/dev/null)
+    # Docker socket locations to check (macOS Docker Desktop uses different paths)
+    local socket_paths=(
+        "/var/run/docker.sock"
+        "/var/run/docker-host.sock"
+        "$HOME/.docker/run/docker.sock"
+    )
 
-        if [ -n "$DOCKER_GID" ]; then
-            # Check if user is already in a group that owns the socket
-            if id -G | grep -qw "$DOCKER_GID"; then
-                log_info "User already has Docker socket access"
-            else
-                # Try to create/use docker-host group with the socket's GID
-                if ! getent group docker-host > /dev/null 2>&1; then
-                    sudo groupadd -g "$DOCKER_GID" docker-host 2>/dev/null || true
+    local socket_found=""
+    for sock in "${socket_paths[@]}"; do
+        if [ -S "$sock" ]; then
+            socket_found="$sock"
+            break
+        fi
+    done
+
+    if [ -z "$socket_found" ]; then
+        # Retry logic for macOS Docker Desktop - socket may not be immediately available
+        for ((i=1; i<=max_retries; i++)); do
+            log_retry "Docker socket not found, attempt $i/$max_retries (waiting ${retry_delay}s)..."
+            sleep "$retry_delay"
+            for sock in "${socket_paths[@]}"; do
+                if [ -S "$sock" ]; then
+                    socket_found="$sock"
+                    log_info "Docker socket found at $sock after retry"
+                    break 2
                 fi
-                sudo usermod -aG docker-host "$(whoami)" 2>/dev/null || true
-            fi
-        fi
-
-        # For macOS Docker Desktop: socket may have root:root ownership with 0660 permissions
-        # Try to make it accessible if docker commands fail
-        if ! docker info > /dev/null 2>&1; then
-            log_warn "Docker socket not accessible, attempting chmod fix..."
-            sudo chmod 666 /var/run/docker.sock 2>/dev/null || true
-        fi
-
-        # Verify docker is working
-        if docker info > /dev/null 2>&1; then
-            log_info "Docker socket permissions configured successfully"
-        else
-            log_warn "Docker socket may require reconnection - try restarting the container"
-        fi
-    else
-        log_warn "Docker socket not found at /var/run/docker.sock"
+            done
+        done
     fi
+
+    if [ -z "$socket_found" ]; then
+        log_warn "Docker socket not found after $max_retries attempts"
+        log_warn "Docker-in-Docker features will be unavailable"
+        log_warn "If using Docker Desktop, ensure the socket is mounted: -v /var/run/docker.sock:/var/run/docker.sock"
+        return 0
+    fi
+
+    log_info "Docker socket found at $socket_found"
+
+    # Get the GID of the docker socket
+    DOCKER_GID=$(stat -c '%g' "$socket_found" 2>/dev/null || stat -f '%g' "$socket_found" 2>/dev/null)
+
+    if [ -n "$DOCKER_GID" ]; then
+        # Check if user is already in a group that owns the socket
+        if id -G | grep -qw "$DOCKER_GID"; then
+            log_info "User already has Docker socket access (GID: $DOCKER_GID)"
+        else
+            log_info "Configuring Docker socket access (GID: $DOCKER_GID)..."
+            # Try to create/use docker-host group with the socket's GID
+            if ! getent group docker-host > /dev/null 2>&1; then
+                sudo groupadd -g "$DOCKER_GID" docker-host 2>/dev/null || true
+            fi
+            sudo usermod -aG docker-host "$(whoami)" 2>/dev/null || true
+        fi
+    fi
+
+    # Test docker access with retries
+    for ((i=1; i<=max_retries; i++)); do
+        if docker info > /dev/null 2>&1; then
+            log_info "Docker socket access verified"
+            return 0
+        fi
+
+        if [ $i -lt $max_retries ]; then
+            log_retry "Docker access failed, attempt $i/$max_retries - trying chmod fix..."
+            sudo chmod 666 "$socket_found" 2>/dev/null || true
+            sleep 1
+        fi
+    done
+
+    log_warn "Docker socket exists but access verification failed"
+    log_warn "You may need to restart the container or check Docker Desktop settings"
+}
+
+# ============================================
+# Find Claude Code binary
+# ============================================
+find_claude() {
+    # Check multiple possible locations
+    local claude_paths=(
+        "$HOME/.claude/bin/claude"
+        "$HOME/.local/bin/claude"
+        "/usr/local/bin/claude"
+    )
+
+    for path in "${claude_paths[@]}"; do
+        if [ -x "$path" ]; then
+            echo "$path"
+            return 0
+        fi
+    done
+
+    # Try command lookup as fallback
+    if command -v claude &> /dev/null; then
+        command -v claude
+        return 0
+    fi
+
+    return 1
 }
 
 # ============================================
 # Configure MCP servers if not already done
 # ============================================
 configure_mcp() {
-    local CLAUDE_BIN="$HOME/.claude/bin/claude"
-    
-    if [ ! -x "$CLAUDE_BIN" ]; then
-        log_warn "Claude Code not found, skipping MCP configuration"
+    local CLAUDE_BIN
+    CLAUDE_BIN=$(find_claude) || true
+
+    if [ -z "$CLAUDE_BIN" ]; then
+        log_warn "Claude Code not found in PATH or standard locations"
+        log_warn "Searched: ~/.claude/bin, ~/.local/bin, /usr/local/bin"
+        log_warn "Skipping MCP configuration"
         return
     fi
 
+    log_info "Found Claude Code at: $CLAUDE_BIN"
+
+    # MCP servers are stored in ~/.claude.json (NOT ~/.claude/settings.json)
+    local MCP_CONFIG="$HOME/.claude.json"
+
     # Check if MCPs are already configured
-    if [ -f "$HOME/.claude/settings.json" ]; then
-        log_info "Claude Code already configured"
+    if [ -f "$MCP_CONFIG" ] && grep -q "mcpServers" "$MCP_CONFIG" 2>/dev/null; then
+        local mcp_count
+        mcp_count=$(grep -o '"type"' "$MCP_CONFIG" 2>/dev/null | wc -l)
+        log_info "MCP servers already configured ($mcp_count servers in ~/.claude.json)"
+
+        # Show configured MCPs
+        if command -v jq &> /dev/null; then
+            log_info "Configured MCPs: $(jq -r '.mcpServers | keys | join(", ")' "$MCP_CONFIG" 2>/dev/null || echo 'parse error')"
+        fi
         return
     fi
 
     log_info "Configuring MCP servers..."
-    
+
     # Add DeepWiki MCP (HTTP transport - works everywhere)
-    $CLAUDE_BIN mcp add -s user -t http deepwiki https://mcp.deepwiki.com/mcp 2>/dev/null || true
-    
-    # If this is node-dev image, add Playwright MCP
-    if command -v playwright &> /dev/null || [ -f "$HOME/.config/claude/.mcp.json" ] && grep -q "playwright" "$HOME/.config/claude/.mcp.json" 2>/dev/null; then
-        log_info "Adding Playwright MCP..."
-        $CLAUDE_BIN mcp add playwright -- npx @playwright/mcp@latest 2>/dev/null || true
+    if "$CLAUDE_BIN" mcp add --scope user --transport http deepwiki https://mcp.deepwiki.com/mcp 2>/dev/null; then
+        log_info "Added DeepWiki MCP"
+    else
+        log_warn "Failed to add DeepWiki MCP (may already exist or CLI error)"
     fi
 
-    log_info "MCP servers configured"
+    # If this is node-dev image, add Playwright MCP
+    if command -v playwright &> /dev/null || [ -f "$HOME/.config/extensions/node-extensions.txt" ]; then
+        log_info "Node environment detected, adding Playwright MCP..."
+        if "$CLAUDE_BIN" mcp add --scope user playwright -- npx @playwright/mcp@latest 2>/dev/null; then
+            log_info "Added Playwright MCP"
+        else
+            log_warn "Failed to add Playwright MCP (may already exist)"
+        fi
+    fi
+
+    log_info "MCP configuration complete"
 }
 
 # ============================================
 # Configure claude-mem plugin
 # ============================================
 configure_claude_mem() {
-    local CLAUDE_BIN="$HOME/.claude/bin/claude"
-    
-    if [ ! -x "$CLAUDE_BIN" ]; then
-        log_warn "Claude Code not found, skipping claude-mem setup"
+    local CLAUDE_BIN
+    CLAUDE_BIN=$(find_claude) || true
+
+    if [ -z "$CLAUDE_BIN" ]; then
+        # Already warned in configure_mcp, just skip silently
         return
     fi
-    
+
     # Check if claude-mem is already installed
     if [ -d "$HOME/.claude/plugins/claude-mem" ]; then
         log_info "claude-mem already installed"
         return
     fi
-    
+
     # Check if npm global claude-mem is available
     if command -v claude-mem &> /dev/null; then
-        log_info "Setting up claude-mem..."
-        claude-mem install 2>/dev/null || true
-        log_info "claude-mem configured"
+        log_info "Setting up claude-mem persistent memory..."
+        if claude-mem install 2>/dev/null; then
+            log_info "claude-mem configured successfully"
+        else
+            log_warn "claude-mem install failed (non-critical)"
+        fi
     else
-        log_warn "claude-mem not found, skipping"
+        log_info "claude-mem not installed globally, skipping"
     fi
 }
 
@@ -190,22 +292,57 @@ start_xvfb() {
 }
 
 # ============================================
+# Print startup summary
+# ============================================
+print_summary() {
+    echo ""
+    echo -e "${GREEN}========================================${NC}"
+    echo -e "${GREEN}  Development Environment Ready${NC}"
+    echo -e "${GREEN}========================================${NC}"
+
+    # Show key tool versions
+    if command -v claude &> /dev/null; then
+        echo -e "  Claude Code: $(claude --version 2>/dev/null | head -1 || echo 'installed')"
+    fi
+    if command -v python3 &> /dev/null; then
+        echo -e "  Python:      $(python3 --version 2>/dev/null)"
+    fi
+    if command -v node &> /dev/null; then
+        echo -e "  Node.js:     $(node --version 2>/dev/null)"
+    fi
+    if command -v docker &> /dev/null && docker info > /dev/null 2>&1; then
+        echo -e "  Docker:      connected"
+    fi
+
+    echo ""
+}
+
+# ============================================
 # Main
 # ============================================
 main() {
     log_info "Initializing development environment..."
-    
+
+    # Ensure PATH is set up before anything else
+    setup_path
+
+    # Core setup
     fix_permissions
     setup_git
+
+    # Claude Code configuration
     configure_mcp
     configure_claude_mem
+
+    # Editor extensions
     install_extensions
-    
+
     # Start Xvfb if available (for Playwright)
     start_xvfb
-    
-    log_info "Environment ready!"
-    
+
+    # Show summary
+    print_summary
+
     # Execute the command passed to the container
     exec "$@"
 }

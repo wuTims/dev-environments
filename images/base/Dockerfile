@@ -209,12 +209,14 @@ RUN mkdir -p /home/$USERNAME/.vscode-server/extensions
 # ============================================
 # MCP Server Configuration
 # ============================================
-# Create MCP config directory
+# Create Claude config directories
+# ~/.claude/ = Claude Code data directory
+# ~/.claude.json = MCP servers and user preferences (NOT settings.json!)
 RUN mkdir -p ~/.config/claude ~/.claude
 
 # DeepWiki MCP (HTTP transport - no local server needed)
-# This will be configured on first run via entrypoint
-COPY --chown=$USERNAME:$USERNAME shared/mcp/base-mcp.json /home/$USERNAME/.claude/settings.json
+# MCP servers go in ~/.claude.json, NOT ~/.claude/settings.json
+COPY --chown=$USERNAME:$USERNAME shared/mcp/base-mcp.json /home/$USERNAME/.claude.json
 
 # ============================================
 # Shell configuration

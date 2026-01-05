@@ -32,49 +32,71 @@ ENV PATH="/home/${USERNAME}/.local/bin:${PATH}"
 
 # ============================================
 # ML/AI Python packages
+# Split into stages to avoid OOM during multi-arch builds
+# GitHub Actions runners have ~7GB RAM limit
 # ============================================
-RUN uv venv ~/.ml-tools \
-    && . ~/.ml-tools/bin/activate \
-    && uv pip install \
-        # Core ML frameworks
+
+# Create venv
+RUN uv venv ~/.ml-tools
+
+# Stage 1: PyTorch (largest dependency - install alone)
+# Using CPU-only for smaller image; GPU users can override at runtime
+RUN . ~/.ml-tools/bin/activate \
+    && uv pip install --no-cache-dir \
         torch \
         torchvision \
         torchaudio \
-        # Data processing
+        --index-url https://download.pytorch.org/whl/cpu
+
+# Stage 2: Data processing and core scientific stack
+RUN . ~/.ml-tools/bin/activate \
+    && uv pip install --no-cache-dir \
         numpy \
         pandas \
         polars \
         pyarrow \
-        # Visualization
+        scikit-learn \
+        scipy
+
+# Stage 3: Visualization
+RUN . ~/.ml-tools/bin/activate \
+    && uv pip install --no-cache-dir \
         matplotlib \
         seaborn \
-        plotly \
-        # Jupyter
+        plotly
+
+# Stage 4: Jupyter ecosystem
+RUN . ~/.ml-tools/bin/activate \
+    && uv pip install --no-cache-dir \
         jupyterlab \
         ipywidgets \
-        jupyter-ai \
-        # Experiment tracking
+        jupyter-ai
+
+# Stage 5: Experiment tracking
+RUN . ~/.ml-tools/bin/activate \
+    && uv pip install --no-cache-dir \
         mlflow \
         wandb \
-        tensorboard \
-        # Model management
+        tensorboard
+
+# Stage 6: HuggingFace ecosystem
+RUN . ~/.ml-tools/bin/activate \
+    && uv pip install --no-cache-dir \
         huggingface-hub \
         transformers \
         datasets \
         accelerate \
         safetensors \
-        # Computer vision
+        tokenizers \
+        sentencepiece
+
+# Stage 7: Computer vision and utilities
+RUN . ~/.ml-tools/bin/activate \
+    && uv pip install --no-cache-dir \
         opencv-python-headless \
         albumentations \
-        # NLP
-        tokenizers \
-        sentencepiece \
-        # Utilities
-        scikit-learn \
-        scipy \
         tqdm \
         einops \
-        # Config management
         hydra-core \
         omegaconf \
         python-dotenv
