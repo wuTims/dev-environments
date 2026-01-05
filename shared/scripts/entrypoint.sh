@@ -26,6 +26,32 @@ setup_path() {
 }
 
 # ============================================
+# Update dotfiles from git repo
+# ============================================
+update_dotfiles() {
+    local DOTFILES_DIR="$HOME/dotfiles"
+
+    if [ ! -d "$DOTFILES_DIR" ]; then
+        log_warn "Dotfiles directory not found at $DOTFILES_DIR"
+        return
+    fi
+
+    log_info "Updating dotfiles..."
+
+    # Pull latest changes (fail gracefully)
+    if cd "$DOTFILES_DIR" && git pull --ff-only 2>/dev/null; then
+        log_info "Dotfiles updated successfully"
+    else
+        log_warn "Dotfiles update failed (using existing version)"
+    fi
+
+    # Run install script to ensure symlinks are current
+    if [ -x "$DOTFILES_DIR/install.sh" ]; then
+        "$DOTFILES_DIR/install.sh" 2>/dev/null || log_warn "Dotfiles install.sh failed"
+    fi
+}
+
+# ============================================
 # Fix permissions for mounted volumes
 # ============================================
 fix_permissions() {
@@ -152,35 +178,27 @@ configure_mcp() {
     # MCP servers are stored in ~/.claude.json (NOT ~/.claude/settings.json)
     local MCP_CONFIG="$HOME/.claude.json"
 
-    # Check if MCPs are already configured
+    # Show current MCP config if exists
     if [ -f "$MCP_CONFIG" ] && grep -q "mcpServers" "$MCP_CONFIG" 2>/dev/null; then
-        local mcp_count
-        mcp_count=$(grep -o '"type"' "$MCP_CONFIG" 2>/dev/null | wc -l)
-        log_info "MCP servers already configured ($mcp_count servers in ~/.claude.json)"
-
-        # Show configured MCPs
         if command -v jq &> /dev/null; then
-            log_info "Configured MCPs: $(jq -r '.mcpServers | keys | join(", ")' "$MCP_CONFIG" 2>/dev/null || echo 'parse error')"
+            log_info "Base MCPs from dotfiles: $(jq -r '.mcpServers | keys | join(", ")' "$MCP_CONFIG" 2>/dev/null || echo 'parse error')"
         fi
-        return
     fi
 
-    log_info "Configuring MCP servers..."
+    # Add image-specific MCPs (these will be added to existing config)
 
-    # Add DeepWiki MCP (HTTP transport - works everywhere)
-    if "$CLAUDE_BIN" mcp add --scope user --transport http deepwiki https://mcp.deepwiki.com/mcp 2>/dev/null; then
-        log_info "Added DeepWiki MCP"
-    else
-        log_warn "Failed to add DeepWiki MCP (may already exist or CLI error)"
-    fi
-
-    # If this is node-dev image, add Playwright MCP
+    # Node-dev: Add Playwright MCP
     if command -v playwright &> /dev/null || [ -f "$HOME/.config/extensions/node-extensions.txt" ]; then
-        log_info "Node environment detected, adding Playwright MCP..."
-        if "$CLAUDE_BIN" mcp add --scope user playwright -- npx @playwright/mcp@latest 2>/dev/null; then
-            log_info "Added Playwright MCP"
+        # Check if Playwright MCP already exists
+        if [ -f "$MCP_CONFIG" ] && grep -q '"playwright"' "$MCP_CONFIG" 2>/dev/null; then
+            log_info "Playwright MCP already configured"
         else
-            log_warn "Failed to add Playwright MCP (may already exist)"
+            log_info "Node environment detected, adding Playwright MCP..."
+            if "$CLAUDE_BIN" mcp add --scope user playwright -- npx @playwright/mcp@latest 2>/dev/null; then
+                log_info "Added Playwright MCP"
+            else
+                log_warn "Failed to add Playwright MCP"
+            fi
         fi
     fi
 
@@ -325,6 +343,9 @@ main() {
 
     # Ensure PATH is set up before anything else
     setup_path
+
+    # Update dotfiles (pulls latest from git)
+    update_dotfiles
 
     # Core setup
     fix_permissions

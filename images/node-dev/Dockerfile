@@ -86,10 +86,7 @@ USER root
 RUN npx playwright install-deps chromium
 USER $USERNAME
 
-# ============================================
-# MCP Configuration (Playwright + DeepWiki)
-# ============================================
-COPY --chown=$USERNAME:$USERNAME images/node-dev/config/node-mcp.json /home/$USERNAME/.claude/settings.json
+# MCP Configuration: Base MCPs from dotfiles, Playwright added by entrypoint at startup
 
 # ============================================
 # Node-specific VS Code extensions

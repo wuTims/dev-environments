@@ -204,21 +204,11 @@ RUN mkdir -p /home/$USERNAME/.vscode-server/extensions
 # ============================================
 # Dotfiles (from github.com/wuTims/dotfiles)
 # ============================================
-# Clone dotfiles and copy config files
-# Using copy instead of symlink for container portability
-RUN git clone --depth 1 https://github.com/wuTims/dotfiles.git /tmp/dotfiles \
-    # Copy Claude Code config (commands, agents, settings)
-    && cp -r /tmp/dotfiles/.claude ~/.claude \
-    # Copy zshrc (replaces default)
-    && cp /tmp/dotfiles/.zshrc ~/.zshrc \
-    # Cleanup
-    && rm -rf /tmp/dotfiles
+# Clone dotfiles repo - install.sh runs at container startup to get latest
+RUN git clone https://github.com/wuTims/dotfiles.git ~/dotfiles \
+    && cd ~/dotfiles && ./install.sh
 
-# ============================================
-# MCP Server Configuration
-# ============================================
-# MCP servers go in ~/.claude.json (separate from ~/.claude/ directory)
-COPY --chown=$USERNAME:$USERNAME shared/mcp/base-mcp.json /home/$USERNAME/.claude.json
+# MCP Server Configuration is now part of dotfiles (.claude.json)
 
 # ============================================
 # Workspace setup
