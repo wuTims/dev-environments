@@ -172,20 +172,15 @@ ENV BUN_INSTALL="/home/${USERNAME}/.bun"
 ENV PATH="${BUN_INSTALL}/bin:${PATH}"
 
 # ============================================
-# Claude Code (native binary - recommended 2025 method)
+# Claude Code (npm install - reliable for CI/CD builds)
 # ============================================
-RUN curl -fsSL https://claude.ai/install.sh | bash \
-    && echo 'export PATH="$HOME/.claude/bin:$PATH"' >> ~/.zshrc \
-    && echo 'export PATH="$HOME/.claude/bin:$PATH"' >> ~/.bashrc
-
-# Ensure Claude is in PATH for this build stage
-ENV PATH="/home/${USERNAME}/.claude/bin:${PATH}"
+USER root
+RUN npm install -g @anthropic-ai/claude-code
 
 # ============================================
 # claude-mem plugin (Persistent Memory for Claude Code)
 # https://github.com/thedotmack/claude-mem
 # ============================================
-USER root
 RUN npm install -g claude-mem
 
 # ============================================
