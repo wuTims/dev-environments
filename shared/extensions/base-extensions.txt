@@ -13,7 +13,6 @@ mhutchie.git-graph
 ms-azuretools.vscode-docker
 
 # General Productivity
-streetsidesoftware.code-spell-checker
 usernamehw.errorlens
 oderwat.indent-rainbow
 gruntfuggly.todo-tree
