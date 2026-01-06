@@ -3,7 +3,7 @@ set -e
 
 # ============================================
 # Dev Environments Bootstrap Script
-# Pulls images and creates convenience scripts
+# Sets up environment and installs convenience scripts
 #
 # Prerequisites (install before running):
 #   - Docker or Docker Desktop
@@ -101,36 +101,6 @@ configure_git() {
 }
 
 # ============================================
-# Pull Dev Images
-# ============================================
-pull_images() {
-    log_step "Pulling dev images..."
-
-    local images=(
-        "$REGISTRY/$NAMESPACE/base:latest"
-        "$REGISTRY/$NAMESPACE/python-dev:latest"
-        "$REGISTRY/$NAMESPACE/node-dev:latest"
-    )
-
-    local failed=()
-
-    for img in "${images[@]}"; do
-        log_info "Pulling $img..."
-        if docker pull "$img" 2>/dev/null; then
-            log_info "Pulled $img"
-        else
-            log_warn "Failed to pull $img"
-            failed+=("$img")
-        fi
-    done
-
-    if [ ${#failed[@]} -gt 0 ]; then
-        log_warn "Some images failed to pull. They may need to be built first."
-        log_warn "See: ./container.sh pull"
-    fi
-}
-
-# ============================================
 # Install container.sh to PATH
 # ============================================
 install_scripts() {
@@ -176,13 +146,6 @@ main() {
 
     check_prerequisites
     configure_git
-
-    # Ask about pulling images
-    read -p "Pull dev images now? [Y/n] " pull_now
-    if [[ ! "$pull_now" =~ ^[Nn]$ ]]; then
-        pull_images
-    fi
-
     install_scripts
 
     echo ""
@@ -192,7 +155,7 @@ main() {
     echo ""
     echo "Quick Start:"
     echo ""
-    echo "  # Run a dev container"
+    echo "  # Run a dev container (pulls image on first run)"
     echo "  ./container.sh run python-dev my-project"
     echo ""
     echo "  # Or use the 'devctl' alias (after reloading shell)"
