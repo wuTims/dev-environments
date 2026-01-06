@@ -43,7 +43,6 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     jq \
     ripgrep \
     fd-find \
-    fzf \
     bat \
     eza \
     unzip \
@@ -134,6 +133,10 @@ RUN sh -c "$(curl -fsSL https://raw.githubusercontent.com/ohmyzsh/ohmyzsh/master
     && git clone https://github.com/zsh-users/zsh-autosuggestions ${ZSH_CUSTOM:-~/.oh-my-zsh/custom}/plugins/zsh-autosuggestions \
     && git clone https://github.com/zsh-users/zsh-syntax-highlighting ${ZSH_CUSTOM:-~/.oh-my-zsh/custom}/plugins/zsh-syntax-highlighting
 
+# fzf (fuzzy finder) - install from git for latest features and shell integration
+RUN git clone --depth 1 https://github.com/junegunn/fzf.git ~/.fzf \
+    && ~/.fzf/install --key-bindings --completion --no-update-rc --no-bash --no-fish
+
 # ============================================
 # Python & uv (needed for spec-kit)
 # ============================================
@@ -162,7 +165,6 @@ RUN uv tool install specify-cli --from git+https://github.com/github/spec-kit.gi
 
 # ============================================
 # Bun (fast JavaScript runtime and package manager)
-# Required for claude-mem plugin
 # ============================================
 RUN curl -fsSL https://bun.sh/install | bash \
     && echo 'export BUN_INSTALL="$HOME/.bun"' >> ~/.zshrc \
@@ -176,12 +178,6 @@ ENV PATH="${BUN_INSTALL}/bin:${PATH}"
 # ============================================
 USER root
 RUN npm install -g @anthropic-ai/claude-code
-
-# ============================================
-# claude-mem plugin (Persistent Memory for Claude Code)
-# https://github.com/thedotmack/claude-mem
-# ============================================
-RUN npm install -g claude-mem
 
 # ============================================
 # Cloudflare CLI (Wrangler)
@@ -199,7 +195,8 @@ RUN chmod +x /home/$USERNAME/.local/bin/install-extensions.sh
 # Pre-install common extensions at build time (editor-agnostic via Open VSX)
 # Extensions list is defined in shared/extensions/base-extensions.txt
 COPY --chown=$USERNAME:$USERNAME shared/extensions/base-extensions.txt /home/$USERNAME/.config/extensions/base-extensions.txt
-RUN mkdir -p /home/$USERNAME/.vscode-server/extensions
+RUN mkdir -p /home/$USERNAME/.vscode-server/extensions \
+    && mkdir -p /home/$USERNAME/.cursor-server
 
 # ============================================
 # Dotfiles (from github.com/wuTims/dotfiles)
