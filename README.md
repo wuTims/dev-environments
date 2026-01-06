@@ -50,6 +50,16 @@ cd dev-environments
 # 3. Choose your container
 ```
 
+### Port Forwarding
+
+Containers don't expose ports by default. Use your IDE's built-in port forwarding:
+
+1. Start a service inside the container (e.g., `python -m http.server 8000`)
+2. IDE detects the port and prompts to forward
+3. Click to open in browser
+
+This avoids port conflicts when running multiple containers.
+
 ### Manage Containers
 
 ```bash
@@ -232,6 +242,17 @@ Create `.devcontainer/devcontainer.json` in your project:
   "image": "ghcr.io/wutims/python-dev:latest",
   "postCreateCommand": "uv pip install -r requirements.txt"
 }
+```
+
+### Optional Plugins
+
+#### claude-mem (Persistent Memory)
+
+Saves conversation context across Claude Code sessions:
+
+```bash
+claude plugin marketplace add thedotmack/claude-mem
+claude plugin install claude-mem
 ```
 
 ## Building Locally
