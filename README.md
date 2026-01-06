@@ -21,7 +21,8 @@ Before using dev-environments, install:
 git clone https://github.com/wutims/dev-environments.git
 cd dev-environments
 
-# Run bootstrap (pulls images, sets up convenience scripts)
+# Run bootstrap (prerequisite check and convenience script setup)
+# For prereq check, ensure your code editor is loaded in PATH
 ./bootstrap.sh
 ```
 
