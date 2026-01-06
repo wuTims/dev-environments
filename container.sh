@@ -142,27 +142,6 @@ get_mounts() {
     echo "${mounts[@]}"
 }
 
-# ============================================
-# Get port mappings for an image type
-# ============================================
-get_ports() {
-    local image_type="$1"
-
-    case "$image_type" in
-        ml-training)
-            echo "-p 8888:8888 -p 6006:6006 -p 5000:5000"
-            ;;
-        node-dev)
-            echo "-p 3000:3000 -p 5173:5173 -p 6006:6006"
-            ;;
-        python-dev)
-            echo "-p 8000:8000 -p 5000:5000 -p 8080:8080"
-            ;;
-        *)
-            echo "-p 8080:8080"
-            ;;
-    esac
-}
 
 # ============================================
 # Create required directories
@@ -231,8 +210,6 @@ run_container() {
     # Build run command
     local mounts
     mounts=$(get_mounts "$image_type" "$container_name")
-    local ports
-    ports=$(get_ports "$image_type")
 
     log_step "Starting container '$container_name'..."
     log_info "Image: $full_image"
@@ -245,7 +222,6 @@ run_container() {
         --hostname "$container_name" \
         --restart unless-stopped \
         $mounts \
-        $ports \
         -e "CONTAINER_NAME=$container_name" \
         "$full_image" \
         sleep infinity
@@ -266,8 +242,6 @@ run_container() {
         echo -e "${CYAN}ML-specific:${NC}"
         echo "  Data:   $BASE_DIR/$container_name/data  -> /home/ubuntu/data"
         echo "  Models: $BASE_DIR/$container_name/models -> /home/ubuntu/models"
-        echo "  Jupyter: http://localhost:8888"
-        echo "  TensorBoard: http://localhost:6006"
         echo ""
     fi
 }
