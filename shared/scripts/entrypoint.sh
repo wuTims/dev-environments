@@ -206,44 +206,6 @@ configure_mcp() {
 }
 
 # ============================================
-# Configure claude-mem plugin (via Claude Code plugin system)
-# https://github.com/thedotmack/claude-mem
-# ============================================
-configure_claude_mem() {
-    local CLAUDE_BIN
-    CLAUDE_BIN=$(find_claude) || true
-
-    if [ -z "$CLAUDE_BIN" ]; then
-        # Already warned in configure_mcp, just skip silently
-        return
-    fi
-
-    # Check if claude-mem plugin is already installed
-    if [ -f "$HOME/.claude/plugins/installed_plugins.json" ] && grep -q "claude-mem" "$HOME/.claude/plugins/installed_plugins.json" 2>/dev/null; then
-        log_info "claude-mem plugin already installed"
-        return
-    fi
-
-    log_info "Installing claude-mem plugin..."
-
-    # Add the marketplace if not already added
-    if ! "$CLAUDE_BIN" plugin marketplace list 2>/dev/null | grep -q "thedotmack"; then
-        log_info "Adding claude-mem marketplace..."
-        if ! "$CLAUDE_BIN" plugin marketplace add thedotmack/claude-mem 2>&1; then
-            log_warn "Failed to add claude-mem marketplace"
-            return
-        fi
-    fi
-
-    # Install the plugin
-    if "$CLAUDE_BIN" plugin install claude-mem --scope user 2>&1; then
-        log_info "claude-mem plugin installed successfully"
-    else
-        log_warn "claude-mem plugin install failed (non-critical)"
-    fi
-}
-
-# ============================================
 # Setup git configuration if not present
 # ============================================
 setup_git() {
@@ -360,7 +322,6 @@ main() {
 
     # Claude Code configuration
     configure_mcp
-    configure_claude_mem
 
     # Editor extensions
     install_extensions
